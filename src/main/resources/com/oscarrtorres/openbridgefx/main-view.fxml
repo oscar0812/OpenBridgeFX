@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.SplitPane?>
+
+<?import javafx.scene.control.ChoiceBox?>
+<SplitPane dividerPositions="0.25" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.oscarrtorres.openbridgefx.MainController">
+
+    <!-- Left side: Large text area for input/output -->
+    <items>
+
+        <!-- Right side: Key-Value input fields and Send button -->
+        <VBox spacing="10.0">
+            <padding>
+                <Insets top="10.0" right="10.0" bottom="10.0" left="10.0"/>
+            </padding>
+
+            <!-- Label for ComboBox -->
+            <Label text="Load previous conversation:"/>
+
+            <!-- Dropdown (ComboBox) -->
+            <ComboBox fx:id="conversationComboBox" prefWidth="200.0"/>
+
+            <!-- Label -->
+            <Label text="Prompt" alignment="CENTER_LEFT"/>
+
+            <!-- Large Text Area for Prompt -->
+            <TextArea fx:id="promptTextArea" wrapText="true" promptText="Enter your prompt here..."
+                      prefHeight="300.0"/>
+
+            <!-- ScrollPane to hold parameter inputs -->
+            <ScrollPane fx:id="parameterScrollPane" fitToWidth="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" managed="false">
+                <VBox fx:id="parameterContainer" spacing="10.0" style="-fx-background-color: transparent;"/>
+            </ScrollPane>
+
+            <!-- Send Button -->
+            <Button text="Send" onAction="#onSendButtonClick" maxWidth="Infinity"/>
+        </VBox>
+
+        <VBox spacing="10.0" fx:id="outputVbox">
+            <ScrollPane fx:id="outputScrollPane" fitToWidth="true" vbarPolicy="AS_NEEDED">
+                <VBox fx:id="outputContainer" spacing="10.0" style="-fx-padding: 10;">
+                    <!-- Messages will be added here -->
+                </VBox>
+            </ScrollPane>
+        </VBox>
+
+    </items>
+</SplitPane>
