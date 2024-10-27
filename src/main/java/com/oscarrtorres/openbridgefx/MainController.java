@@ -268,17 +268,21 @@ public class MainController {
 
     private void onMessageBubbleClick(HBox messageBubble) {
         ConversationEntry data = (ConversationEntry) messageBubble.getUserData();
-        promptTextArea.setText(data.getRawPrompt());
 
-        // Populate parameterContainer using stored parameters
-        parameterContainer.getChildren().clear();
-        Map<String, String> storedParameters = data.getParameters();
+        promptTextArea.setText(data.getRawPrompt()); // will trigger updateParameters()
 
-        for (Map.Entry<String, String> pEntry : storedParameters.entrySet()) {
-            addParameterField(pEntry.getKey(), pEntry.getValue());
+        for (var node : parameterContainer.getChildren()) {
+            if (node instanceof HBox parameterSet) {
+                TextField keyField = (TextField) parameterSet.getChildren().get(1);
+                TextField valueField = (TextField) parameterSet.getChildren().get(3);
+
+                String key = keyField.getText().trim();
+
+                valueField.setText(data.getParameters().getOrDefault(key, ""));
+            }
         }
 
-        parameterScrollPane.setVisible(!storedParameters.isEmpty());
-        parameterScrollPane.setManaged(!storedParameters.isEmpty());
+        parameterScrollPane.setVisible(!data.getParameters().isEmpty());
+        parameterScrollPane.setManaged(!data.getParameters().isEmpty());
     }
 }
