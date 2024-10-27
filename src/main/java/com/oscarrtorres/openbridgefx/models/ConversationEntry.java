@@ -1,4 +1,4 @@
-package com.oscarrtorres.openbridgefx;
+package com.oscarrtorres.openbridgefx.models;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +12,9 @@ public class ConversationEntry {
 
     private boolean loadedFromJson;
 
+    private TokenCostInfo promptInfo;
+    private TokenCostInfo responseInfo;
+
     public ConversationEntry() {
         this.timestamp = null;
         this.rawPrompt = "";
@@ -20,15 +23,17 @@ public class ConversationEntry {
         this.parameters = new HashMap<>();
     }
 
-    public ConversationEntry(String timestamp, String rawPrompt, String response, String finalPrompt, Map<String, String> parameters, boolean loadedFromJson) {
+    public ConversationEntry(String timestamp, String rawPrompt, String response, String finalPrompt,
+                             Map<String, String> parameters, boolean loadedFromJson, TokenCostInfo promptTokenInfo, TokenCostInfo responseTokenInfo) {
         this.timestamp = timestamp;
         this.rawPrompt = rawPrompt;
         this.response = response;
         this.finalPrompt = finalPrompt;
         this.parameters = parameters;
         this.loadedFromJson = loadedFromJson;
+        this.promptInfo = promptTokenInfo;
+        this.responseInfo = responseTokenInfo;
     }
-
     // Getters and Setters
     public String getTimestamp() {
         return timestamp;
@@ -73,4 +78,21 @@ public class ConversationEntry {
     public boolean isLoadedFromJson() {
         return loadedFromJson;
     }
+
+    public void setPromptInfo(TokenCostInfo promptInfo) {
+        this.promptInfo = promptInfo;
+    }
+
+    public TokenCostInfo getPromptInfo() {
+        return promptInfo;
+    }
+
+    public void setResponseInfo(TokenCostInfo responseInfo) {
+        this.responseInfo = responseInfo;
+    }
+
+    public TokenCostInfo getResponseInfo() {
+        return responseInfo;
+    }
 }
+

@@ -1,4 +1,4 @@
-package com.oscarrtorres.openbridgefx;
+package com.oscarrtorres.openbridgefx.services;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import javafx.concurrent.Service;

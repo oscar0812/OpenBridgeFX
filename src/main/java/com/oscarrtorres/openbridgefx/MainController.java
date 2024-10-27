@@ -1,5 +1,11 @@
 package com.oscarrtorres.openbridgefx;
 
+import com.knuddels.jtokkit.api.ModelType;
+import com.oscarrtorres.openbridgefx.models.ConversationEntry;
+import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
+import com.oscarrtorres.openbridgefx.services.ApiService;
+import com.oscarrtorres.openbridgefx.services.ConversationLogService;
+import com.oscarrtorres.openbridgefx.services.TokenService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -39,6 +45,7 @@ public class MainController {
     private static final double MAX_SCROLLPANE_HEIGHT = 300.0;
 
     private final ConversationLogService conversationLogService = new ConversationLogService();
+    private TokenService tokenService;
 
     @FXML
     public void initialize() {
@@ -59,6 +66,8 @@ public class MainController {
         conversationComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             onComboBoxChange(newValue);
         });
+
+        tokenService = new TokenService(ModelType.GPT_4O_MINI);
     }
 
     private void onComboBoxChange(String selectedOption) {
@@ -176,6 +185,8 @@ public class MainController {
         }
 
         conversationEntry.setFinalPrompt(parsedPrompt);
+        conversationEntry.setPromptInfo(tokenService.getPromptInfo(parsedPrompt));
+
         addMessageBubble(conversationEntry, true);
 
         // Create and start the GPT API service
@@ -184,6 +195,7 @@ public class MainController {
         gptApiService.setOnSucceeded(event -> {
             String gptResponse = gptApiService.getValue();
             conversationEntry.setResponse(gptResponse);
+            conversationEntry.setResponseInfo(tokenService.getResponseInfo(gptResponse));
 
             addMessageBubble(conversationEntry, false); // Add GPT response as received message
 
@@ -211,14 +223,21 @@ public class MainController {
         messageLabel.setPadding(new Insets(10));
         messageLabel.setFont(new Font("Arial", 14));
 
-        // Create sender label with timestamp
+        // Create sender label with timestamp at the top
         Label senderLabel = new Label(isSent ? "You (" + timestamp + ")" : "Other (" + timestamp + ")");
         senderLabel.setTextFill(Color.GRAY);
         senderLabel.setFont(new Font("Arial", 12));
 
-        VBox bubbleContainer = new VBox(5);
-        bubbleContainer.getChildren().addAll(senderLabel, messageLabel);
+        // Bottom label (e.g., token info or any other text)
+        TokenCostInfo tokenCostInfo = isSent ? entry.getPromptInfo() : entry.getResponseInfo();
+        Label bottomLabel = new Label(tokenCostInfo.toString());  // Replace with actual token info
+        bottomLabel.setTextFill(Color.GRAY);
+        bottomLabel.setFont(new Font("Arial", 12));
 
+        VBox bubbleContainer = new VBox(5);
+        bubbleContainer.getChildren().addAll(senderLabel, messageLabel, bottomLabel);  // Added bottomLabel here
+
+        // Set styles for sent and received messages
         if (isSent) {
             messageLabel.setStyle("-fx-background-color: lightblue; -fx-background-radius: 15; -fx-text-fill: black;");
         } else {

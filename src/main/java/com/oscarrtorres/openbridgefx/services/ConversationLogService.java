@@ -1,5 +1,7 @@
-package com.oscarrtorres.openbridgefx;
+package com.oscarrtorres.openbridgefx.services;
 
+import com.oscarrtorres.openbridgefx.models.ConversationEntry;
+import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.json.JSONArray;
@@ -70,6 +72,22 @@ public class ConversationLogService {
         logEntryJson.put("parameters", conversationEntry.getParameters());
         logEntryJson.put("response", conversationEntry.getResponse());
 
+        // Convert promptTokenInfo to JSON
+        if (conversationEntry.getPromptInfo() != null) {
+            JSONObject promptTokenJson = new JSONObject();
+            promptTokenJson.put("tokenCount", conversationEntry.getPromptInfo().getTokenCount());
+            promptTokenJson.put("totalCost", conversationEntry.getPromptInfo().getTotalCost());
+            logEntryJson.put("promptTokenInfo", promptTokenJson);
+        }
+
+        // Convert responseTokenInfo to JSON
+        if (conversationEntry.getResponseInfo() != null) {
+            JSONObject responseTokenJson = new JSONObject();
+            responseTokenJson.put("tokenCount", conversationEntry.getResponseInfo().getTokenCount());
+            responseTokenJson.put("totalCost", conversationEntry.getResponseInfo().getTotalCost());
+            logEntryJson.put("responseTokenInfo", responseTokenJson);
+        }
+
         // Append the new log entry to the array
         logArray.put(logEntryJson);
 
@@ -92,7 +110,7 @@ public class ConversationLogService {
             // Parse the string as a JSONArray
             JSONArray logArray = new JSONArray(jsonContent);
 
-            // Iterate over the JSON array and add the entries as LogEntry objects
+            // Iterate over the JSON array and add the entries as ConversationEntry objects
             for (int i = 0; i < logArray.length(); i++) {
                 JSONObject logEntryJson = logArray.getJSONObject(i);
 
@@ -103,14 +121,34 @@ public class ConversationLogService {
                     parameters.put(key, parametersJson.getString(key));
                 }
 
-                // Create a LogEntry object from JSON
+                // Parse promptTokenInfo and responseTokenInfo
+                TokenCostInfo promptTokenInfo = null;
+                TokenCostInfo responseTokenInfo = null;
+
+                if (logEntryJson.has("promptTokenInfo")) {
+                    JSONObject promptTokenJson = logEntryJson.getJSONObject("promptTokenInfo");
+                    int promptTokenCount = promptTokenJson.optInt("tokenCount", 0);
+                    double promptTotalCost = promptTokenJson.optDouble("totalCost", 0.0);
+                    promptTokenInfo = new TokenCostInfo(promptTokenCount, promptTotalCost);
+                }
+
+                if (logEntryJson.has("responseTokenInfo")) {
+                    JSONObject responseTokenJson = logEntryJson.getJSONObject("responseTokenInfo");
+                    int responseTokenCount = responseTokenJson.optInt("tokenCount", 0);
+                    double responseTotalCost = responseTokenJson.optDouble("totalCost", 0.0);
+                    responseTokenInfo = new TokenCostInfo(responseTokenCount, responseTotalCost);
+                }
+
+                // Create a ConversationEntry object from JSON
                 ConversationEntry conversationEntry = new ConversationEntry(
                         logEntryJson.optString("timestamp"),
                         logEntryJson.optString("rawPrompt"),
                         logEntryJson.optString("response"),
                         logEntryJson.optString("finalPrompt"),
                         parameters,
-                        true
+                        true,
+                        promptTokenInfo,
+                        responseTokenInfo
                 );
 
                 logEntries.add(conversationEntry);
@@ -123,6 +161,7 @@ public class ConversationLogService {
 
         return logEntries;
     }
+
 
     public List<String> getConversationFileNames() {
         Path logDirectory = Paths.get(SUB_PATH);
