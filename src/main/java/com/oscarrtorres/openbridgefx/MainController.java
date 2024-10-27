@@ -13,6 +13,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -149,6 +150,8 @@ public class MainController {
         valueField.setText(value);
         valueField.setPromptText("Enter your param value here...");
 
+        HBox.setHgrow(valueField, Priority.ALWAYS);
+
         parameterSet.getChildren().addAll(keyLabel, keyField, valueLabel, valueField);
         parameterContainer.getChildren().add(parameterSet);
     }
@@ -250,6 +253,7 @@ public class MainController {
         if (isSent) {
             messageBubble.setAlignment(Pos.CENTER_RIGHT);
             messageBubble.setUserData(entry);
+            messageBubble.setCursor(javafx.scene.Cursor.HAND);
             messageBubble.setOnMouseClicked(event -> onMessageBubbleClick(messageBubble));
         } else {
             messageBubble.setAlignment(Pos.CENTER_LEFT);

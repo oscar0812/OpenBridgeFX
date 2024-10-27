@@ -34,7 +34,7 @@
 
             <!-- Large Text Area for Prompt -->
             <TextArea fx:id="promptTextArea" wrapText="true" promptText="Enter your prompt here..."
-                      prefHeight="300.0"/>
+                      prefHeight="400.0"/>
 
             <!-- ScrollPane to hold parameter inputs -->
             <ScrollPane fx:id="parameterScrollPane" fitToWidth="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" managed="false">
