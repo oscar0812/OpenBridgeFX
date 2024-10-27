@@ -14,57 +14,64 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public class ApiLogService {
+public class ConversationLogService {
 
     private String logFilePath;
+    private static final String SUB_PATH = "conversations/";
 
-    public ApiLogService() {
-        Path logsDirPath = Paths.get("logs");
+    public ConversationLogService() {
+        Path logsDirPath = Paths.get(SUB_PATH);
 
         // Check if directory exists, if not, create it
         try {
             if (Files.notExists(logsDirPath)) {
                 Files.createDirectories(logsDirPath);
-                System.out.println("Created 'logs/' directory.");
+                System.out.println("Created '" + SUB_PATH + "' directory.");
             }
-        } catch (Exception e){}
 
-        String name = getCurrentTimestamp().replaceAll("[^a-zA-Z0-9._-]", "_");
-        this.logFilePath = "logs/" + name + ".json";
+            String fileName = getCurrentTimestamp().replaceAll("[^a-zA-Z0-9._-]", "_");
+            this.setFileName(fileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setFileName(String fileName) {
+        if (!fileName.endsWith(".json")) {
+            this.logFilePath = SUB_PATH + fileName + ".json";
+        } else {
+            this.logFilePath = SUB_PATH + fileName;
+        }
     }
 
 
-    // Method to save the prompt, parameters, and output to a JSON file
-    public void saveToJsonFile(String rawPrompt, String finalPrompt, Map<String, String> parameters, String output) {
+    public void saveEntryToFile(ConversationEntry conversationEntry) {
         JSONArray logArray = new JSONArray();
 
         // Load existing log entries from the file (if the file exists)
         try {
             File logFile = new File(logFilePath);
             if (logFile.exists()) {
-                String existingData = new String(Files.readAllBytes(Paths.get(logFilePath)), StandardCharsets.UTF_8);
+                String existingData = Files.readString(Paths.get(logFilePath));
                 logArray = new JSONArray(existingData);
             }
         } catch (IOException e) {
             e.printStackTrace(); // Handle the error (could log it or notify the user)
         }
 
-        // Create new log entry
-        JSONObject logEntry = new JSONObject();
-        logEntry.put("timestamp", getCurrentTimestamp());
-        logEntry.put("rawPrompt", rawPrompt);
-        logEntry.put("finalPrompt", finalPrompt);
-        logEntry.put("parameters", parameters);
-        logEntry.put("response", output);
+        // Create new JSON object from LogEntry
+        JSONObject logEntryJson = new JSONObject();
+        logEntryJson.put("timestamp", conversationEntry.getTimestamp());
+        logEntryJson.put("rawPrompt", conversationEntry.getRawPrompt());
+        logEntryJson.put("finalPrompt", conversationEntry.getFinalPrompt());
+        logEntryJson.put("parameters", conversationEntry.getParameters());
+        logEntryJson.put("response", conversationEntry.getResponse());
 
         // Append the new log entry to the array
-        logArray.put(logEntry);
+        logArray.put(logEntryJson);
 
         // Write the updated log array back to the file
         try (FileWriter file = new FileWriter(logFilePath)) {
@@ -74,9 +81,9 @@ public class ApiLogService {
         }
     }
 
-    public ObservableList<Map<String, String>> loadFromJsonFile(String logFileName) {
-        String logFilePath = "logs/" + logFileName;
-        ObservableList<Map<String, String>> logEntries = FXCollections.observableArrayList();
+    public ObservableList<ConversationEntry> loadFromJsonFile(String logFileName) {
+        String logFilePath = SUB_PATH + logFileName;
+        ObservableList<ConversationEntry> logEntries = FXCollections.observableArrayList();
 
         try {
             // Read the JSON file as a string
@@ -85,15 +92,28 @@ public class ApiLogService {
             // Parse the string as a JSONArray
             JSONArray logArray = new JSONArray(jsonContent);
 
-            // Iterate over the JSON array and add the entries to the ObservableList
+            // Iterate over the JSON array and add the entries as LogEntry objects
             for (int i = 0; i < logArray.length(); i++) {
-                JSONObject logEntry = logArray.getJSONObject(i);
+                JSONObject logEntryJson = logArray.getJSONObject(i);
 
-                // Convert the logEntry JSONObject to a Map
-                Map<String, String> entryMap = logEntry.toMap().entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
+                // Extract parameters as a Map
+                Map<String, String> parameters = new HashMap<>();
+                JSONObject parametersJson = logEntryJson.getJSONObject("parameters");
+                for (String key : parametersJson.keySet()) {
+                    parameters.put(key, parametersJson.getString(key));
+                }
 
-                logEntries.add(entryMap);
+                // Create a LogEntry object from JSON
+                ConversationEntry conversationEntry = new ConversationEntry(
+                        logEntryJson.optString("timestamp"),
+                        logEntryJson.optString("rawPrompt"),
+                        logEntryJson.optString("response"),
+                        logEntryJson.optString("finalPrompt"),
+                        parameters,
+                        true
+                );
+
+                logEntries.add(conversationEntry);
             }
         } catch (IOException e) {
             e.printStackTrace(); // Handle error while reading the file
@@ -104,9 +124,8 @@ public class ApiLogService {
         return logEntries;
     }
 
-    public List<String> getLogFileNames() {
-        String logDirectoryPath = "logs/";
-        Path logDirectory = Paths.get(logDirectoryPath);
+    public List<String> getConversationFileNames() {
+        Path logDirectory = Paths.get(SUB_PATH);
 
         List<String> logFileNames = new LinkedList<>();
 
@@ -122,15 +141,15 @@ public class ApiLogService {
                         .collect(Collectors.toList());
 
                 System.out.println(logFileNames);
-            }catch (Exception e) {
-                System.out.println(e);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         return logFileNames;
     }
 
     // Utility method to get the current timestamp
-    private String getCurrentTimestamp() {
+    public String getCurrentTimestamp() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return LocalDateTime.now().format(formatter);
     }

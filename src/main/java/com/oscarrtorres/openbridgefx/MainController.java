@@ -11,9 +11,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +38,7 @@ public class MainController {
     private static final double PARAMETER_HEIGHT = 60.0;
     private static final double MAX_SCROLLPANE_HEIGHT = 300.0;
 
-    private ApiLogService apiLogService = new ApiLogService();
+    private final ConversationLogService conversationLogService = new ConversationLogService();
 
     @FXML
     public void initialize() {
@@ -51,7 +52,7 @@ public class MainController {
         parameterScrollPane.setManaged(false);
 
         // Set items for the ComboBox
-        ObservableList<String> options = FXCollections.observableArrayList(apiLogService.getLogFileNames());
+        ObservableList<String> options = FXCollections.observableArrayList(conversationLogService.getConversationFileNames());
 
         // Set items for the ComboBox
         conversationComboBox.setItems(options);
@@ -61,18 +62,36 @@ public class MainController {
     }
 
     private void onComboBoxChange(String selectedOption) {
-        System.out.println("Selected: " + selectedOption);
-        ObservableList<Map<String, String>> conversation = apiLogService.loadFromJsonFile(selectedOption);
+        conversationLogService.setFileName(selectedOption);
+
+        ObservableList<ConversationEntry> conversation = conversationLogService.loadFromJsonFile(selectedOption);
 
         clearMessageBubbles();
-        for (Map<String, String> item : conversation) {
-            String timestamp = item.get("timestamp");
-            addMessageBubble(item.get("rawPrompt"), true, timestamp);
-            addMessageBubble(item.get("response"), false, timestamp);
+        for (ConversationEntry entry : conversation) {
+            addMessageBubble(entry, true);
+            addMessageBubble(entry, false);
         }
     }
 
     private void updateParameters(String prompt) {
+        Map<String, String> currentParameters = new HashMap<>();
+
+        // Collect current parameters from the UI
+        for (var node : parameterContainer.getChildren()) {
+            if (node instanceof HBox parameterSet) {
+                TextField keyField = (TextField) parameterSet.getChildren().get(1);
+                TextField valueField = (TextField) parameterSet.getChildren().get(3);
+
+                String key = keyField.getText().trim();
+                String value = valueField.getText().trim();
+
+                if (!key.isEmpty()) {
+                    currentParameters.put(key, value);
+                }
+            }
+        }
+
+        // Clear existing parameter fields in the UI
         parameterContainer.getChildren().clear();
 
         Pattern pattern = Pattern.compile("\\{(\\w+)\\}");
@@ -84,7 +103,9 @@ public class MainController {
         while (matcher.find()) {
             String key = matcher.group(1);
             if (uniqueKeys.add(key)) {
-                addParameterField(key);
+                // Check if this key already has a value
+                String value = currentParameters.getOrDefault(key, ""); // Use existing value if present
+                addParameterField(key, value);
                 hasParameters = true;
             }
         }
@@ -105,6 +126,10 @@ public class MainController {
 
     @FXML
     public void addParameterField(String key) {
+        addParameterField(key, "");
+    }
+
+    public void addParameterField(String key, String value) {
         HBox parameterSet = new HBox(10);
         Label keyLabel = new Label("Key:");
         TextField keyField = new TextField();
@@ -112,6 +137,7 @@ public class MainController {
         keyField.setPromptText("Enter your param key here...");
         Label valueLabel = new Label("Value:");
         TextField valueField = new TextField();
+        valueField.setText(value);
         valueField.setPromptText("Enter your param value here...");
 
         parameterSet.getChildren().addAll(keyLabel, keyField, valueLabel, valueField);
@@ -120,9 +146,13 @@ public class MainController {
 
     @FXML
     public void onSendButtonClick() {
-        String prompt = promptTextArea.getText();
+        ConversationEntry conversationEntry = new ConversationEntry();
+        conversationEntry.setTimestamp(conversationLogService.getCurrentTimestamp());
+
+        conversationEntry.setRawPrompt(promptTextArea.getText());
         Map<String, String> parameters = new HashMap<>();
 
+        // Collect parameter key-value pairs from the parameter container
         for (var node : parameterContainer.getChildren()) {
             if (node instanceof HBox parameterSet) {
                 TextField keyField = (TextField) parameterSet.getChildren().get(1);
@@ -136,50 +166,50 @@ public class MainController {
                 }
             }
         }
+        conversationEntry.setParameters(parameters);
 
-        String parsedPrompt = prompt;
+        // Replace placeholders in prompt with parameter values
+        String parsedPrompt = conversationEntry.getRawPrompt();
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
             String placeholder = "{" + entry.getKey() + "}";
             parsedPrompt = parsedPrompt.replace(placeholder, entry.getValue());
         }
 
-        final String finalPrompt = parsedPrompt;
-        addMessageBubble(finalPrompt, true); // Display sent message
+        conversationEntry.setFinalPrompt(parsedPrompt);
+        addMessageBubble(conversationEntry, true);
 
         // Create and start the GPT API service
-        ApiService gptApiService = new ApiService(finalPrompt);
+        ApiService gptApiService = new ApiService(conversationEntry.getFinalPrompt());
 
         gptApiService.setOnSucceeded(event -> {
             String gptResponse = gptApiService.getValue();
-            addMessageBubble(gptResponse, false); // Add GPT response as received message
-            apiLogService.saveToJsonFile(prompt, finalPrompt, parameters, gptResponse);
+            conversationEntry.setResponse(gptResponse);
+
+            addMessageBubble(conversationEntry, false); // Add GPT response as received message
+
+            // Create a LogEntry object with the necessary details
+            // Save the log entry using the updated saveEntryToFile method
+            conversationLogService.saveEntryToFile(conversationEntry);
         });
 
         gptApiService.setOnFailed(event -> {
             Throwable exception = gptApiService.getException();
-            addMessageBubble("Error: " + exception.getMessage(), false); // Handle error
+            conversationEntry.setResponse("Error: " + exception.getMessage());
+            addMessageBubble(conversationEntry, false); // Handle error
         });
 
         gptApiService.start(); // Start the service
     }
 
-    private void addMessageBubble(String message, boolean isSent) {
-        this.addMessageBubble(message, isSent, null);
-    }
+    private void addMessageBubble(ConversationEntry entry, boolean isSent) {
+        String message = isSent ? entry.getFinalPrompt() : entry.getResponse();
+        String timestamp = entry.getTimestamp();
 
-    private void addMessageBubble(String message, boolean isSent, String timestamp) {
         Label messageLabel = new Label(message);
         messageLabel.setWrapText(true);
         messageLabel.setMaxWidth(300);
         messageLabel.setPadding(new Insets(10));
         messageLabel.setFont(new Font("Arial", 14));
-
-        // Get the current time and format it
-        if(Objects.isNull(timestamp)) {
-            LocalDateTime now = LocalDateTime.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yy hh:mm a");
-            timestamp = now.format(formatter);
-        }
 
         // Create sender label with timestamp
         Label senderLabel = new Label(isSent ? "You (" + timestamp + ")" : "Other (" + timestamp + ")");
@@ -200,6 +230,8 @@ public class MainController {
 
         if (isSent) {
             messageBubble.setAlignment(Pos.CENTER_RIGHT);
+            messageBubble.setUserData(entry);
+            messageBubble.setOnMouseClicked(event -> onMessageBubbleClick(messageBubble));
         } else {
             messageBubble.setAlignment(Pos.CENTER_LEFT);
         }
@@ -209,5 +241,21 @@ public class MainController {
 
     private void clearMessageBubbles() {
         outputContainer.getChildren().clear();
+    }
+
+    private void onMessageBubbleClick(HBox messageBubble) {
+        ConversationEntry data = (ConversationEntry) messageBubble.getUserData();
+        promptTextArea.setText(data.getRawPrompt());
+
+        // Populate parameterContainer using stored parameters
+        parameterContainer.getChildren().clear();
+        Map<String, String> storedParameters = data.getParameters();
+
+        for (Map.Entry<String, String> pEntry : storedParameters.entrySet()) {
+            addParameterField(pEntry.getKey(), pEntry.getValue());
+        }
+
+        parameterScrollPane.setVisible(!storedParameters.isEmpty());
+        parameterScrollPane.setManaged(!storedParameters.isEmpty());
     }
 }
