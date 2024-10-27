@@ -2,10 +2,13 @@ package com.oscarrtorres.openbridgefx;
 
 import com.knuddels.jtokkit.api.ModelType;
 import com.oscarrtorres.openbridgefx.models.ConversationEntry;
+import com.oscarrtorres.openbridgefx.models.EnvData;
 import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
 import com.oscarrtorres.openbridgefx.services.ApiService;
 import com.oscarrtorres.openbridgefx.services.ConversationLogService;
 import com.oscarrtorres.openbridgefx.services.TokenService;
+import io.github.cdimascio.dotenv.Dotenv;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -18,10 +21,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,9 +50,12 @@ public class MainController {
 
     private final ConversationLogService conversationLogService = new ConversationLogService();
     private TokenService tokenService;
+    private EnvData envData;
 
     @FXML
     public void initialize() {
+        checkEnvFile();
+
         promptTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
             updateParameters(newValue);
         });
@@ -69,6 +75,39 @@ public class MainController {
         });
 
         tokenService = new TokenService(ModelType.GPT_4O_MINI);
+    }
+
+    private void checkEnvFile() {
+        envData = new EnvData(null, null, null);
+
+        File envFile = new File(".env");
+        if (!envFile.exists()) {
+            showEnvDialog();
+        }
+
+        // file exists, but does it have all the required values?
+        Dotenv dotenv = Dotenv.load();
+        String apiKey = dotenv.get("API_KEY");
+        String apiUrl = dotenv.get("API_URL");
+        String model = dotenv.get("MODEL");
+        envData = new EnvData(apiKey, apiUrl, model);
+
+        if (!envData.isValid()) {
+            showEnvDialog();
+        }
+    }
+
+    private void showEnvDialog() {
+        EnvFileDialog envFileDialog = new EnvFileDialog(this, envData);
+        envFileDialog.showDialog(); // Show the dialog
+    }
+
+    public void showErrorAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("An error occurred");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private void onComboBoxChange(String selectedOption) {
@@ -193,7 +232,7 @@ public class MainController {
         addMessageBubble(conversationEntry, true);
 
         // Create and start the GPT API service
-        ApiService gptApiService = new ApiService(conversationEntry.getFinalPrompt());
+        ApiService gptApiService = new ApiService(conversationEntry.getFinalPrompt(), envData);
 
         gptApiService.setOnSucceeded(event -> {
             String gptResponse = gptApiService.getValue();

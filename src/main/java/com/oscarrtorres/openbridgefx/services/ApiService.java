@@ -1,5 +1,6 @@
 package com.oscarrtorres.openbridgefx.services;
 
+import com.oscarrtorres.openbridgefx.models.EnvData;
 import io.github.cdimascio.dotenv.Dotenv;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -23,14 +24,11 @@ import org.json.JSONObject;
 
 public class ApiService extends Service<String> {
 
-    private final String apiUrl;
-    private final String apiKey;
+    private final EnvData envData;
     private final String prompt;
 
-    public ApiService(String prompt) {
-        Dotenv dotenv = Dotenv.load();
-        this.apiKey = dotenv.get("API_KEY");
-        this.apiUrl = dotenv.get("API_URL");
+    public ApiService(String prompt, EnvData envData) {
+        this.envData = envData;
         this.prompt = prompt;
     }
 
@@ -39,16 +37,16 @@ public class ApiService extends Service<String> {
         return new Task<>() {
             @Override
             protected String call() throws Exception {
-                URL url = new URL(apiUrl);
+                URL url = new URL(envData.getApiUrl());
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
-                connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+                connection.setRequestProperty("Authorization", "Bearer " + envData.getApiKey());
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
                 // Create a JSON object for the request
                 JSONObject requestBody = new JSONObject();
-                requestBody.put("model", "gpt-4o-mini");
+                requestBody.put("model", envData.getModel());
 
                 // Create the messages array
                 JSONArray messages = new JSONArray();
