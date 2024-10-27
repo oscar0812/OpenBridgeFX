@@ -1,3 +1,5 @@
+Here’s the updated README with the new instructions included:
+
 # OpenBridgeFX
 
 OpenBridgeFX is a JavaFX application that allows users to interact with a conversational AI system. Users can load past conversations, send prompts with dynamic parameters, and view chat-style responses.
@@ -13,8 +15,11 @@ OpenBridgeFX is a JavaFX application that allows users to interact with a conver
 
 1. Clone the repository.
 2. Open the project in your preferred Java IDE.
-3. Ensure you have the necessary JavaFX dependencies.
-4. Run the application.
+3. Locate the .jar file under `out/artifacts/OpenBridgeFx_jar`.
+4. Create an `.env` file in the same directory with the following values:
+    - `API_KEY=<your_api_key>`
+    - `API_URL=https://api.openai.com/v1/chat/completions`
+5. Run the application: ```java -jar <jarfile.jar>```
 
 ## How to Use
 
