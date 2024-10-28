@@ -7,6 +7,12 @@ public class EnvData {
     private String apiUrl;
     private String model;
 
+    public EnvData() {
+        this.apiKey = null;
+        this.apiUrl = null;
+        this.model = null;
+    }
+
     public EnvData(String apiKey, String apiUrl, String model) {
         this.apiKey = apiKey;
         this.apiUrl = apiUrl;

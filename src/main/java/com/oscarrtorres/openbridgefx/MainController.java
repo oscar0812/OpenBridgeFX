@@ -8,7 +8,6 @@ import com.oscarrtorres.openbridgefx.services.ApiService;
 import com.oscarrtorres.openbridgefx.services.ConversationLogService;
 import com.oscarrtorres.openbridgefx.services.TokenService;
 import io.github.cdimascio.dotenv.Dotenv;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -17,14 +16,18 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,7 +53,7 @@ public class MainController {
 
     private final ConversationLogService conversationLogService = new ConversationLogService();
     private TokenService tokenService;
-    private EnvData envData;
+    private final EnvData envData = new EnvData();
 
     @FXML
     public void initialize() {
@@ -73,13 +76,9 @@ public class MainController {
         conversationComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             onComboBoxChange(newValue);
         });
-
-        tokenService = new TokenService(ModelType.GPT_4O_MINI);
     }
 
     private void checkEnvFile() {
-        envData = new EnvData(null, null, null);
-
         File envFile = new File(".env");
         if (!envFile.exists()) {
             showEnvDialog();
@@ -90,11 +89,15 @@ public class MainController {
         String apiKey = dotenv.get("API_KEY");
         String apiUrl = dotenv.get("API_URL");
         String model = dotenv.get("MODEL");
-        envData = new EnvData(apiKey, apiUrl, model);
+        envData.setApiKey(apiKey);
+        envData.setApiUrl(apiUrl);
+        envData.setModel(model);
 
         if (!envData.isValid()) {
             showEnvDialog();
         }
+
+        tokenService = new TokenService(ModelType.fromName(envData.getModel()).orElseThrow());
     }
 
     private void showEnvDialog() {
@@ -259,11 +262,18 @@ public class MainController {
         String message = isSent ? entry.getFinalPrompt() : entry.getResponse();
         String timestamp = entry.getTimestamp();
 
-        Label messageLabel = new Label(message);
-        messageLabel.setWrapText(true);
-        messageLabel.setMaxWidth(300);
-        messageLabel.setPadding(new Insets(10));
-        messageLabel.setFont(new Font("Arial", 14));
+        // Using TextFlow for better text wrapping and dynamic height adjustment
+        TextFlow messageTextFlow = new TextFlow(new Text(message));
+        messageTextFlow.setMaxWidth(500);  // Set a maximum width for wrapping
+        messageTextFlow.setPadding(new Insets(10));
+        messageTextFlow.setStyle("-fx-font-family: Arial; -fx-font-size: 14px; -fx-background-radius: 15;");
+
+        // Styling the text background based on sent/received
+        if (isSent) {
+            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightblue; -fx-text-fill: black;");
+        } else {
+            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightgreen; -fx-text-fill: black;");
+        }
 
         // Create sender label with timestamp at the top
         Label senderLabel = new Label(isSent ? "You (" + timestamp + ")" : "Other (" + timestamp + ")");
@@ -277,14 +287,7 @@ public class MainController {
         bottomLabel.setFont(new Font("Arial", 12));
 
         VBox bubbleContainer = new VBox(5);
-        bubbleContainer.getChildren().addAll(senderLabel, messageLabel, bottomLabel);  // Added bottomLabel here
-
-        // Set styles for sent and received messages
-        if (isSent) {
-            messageLabel.setStyle("-fx-background-color: lightblue; -fx-background-radius: 15; -fx-text-fill: black;");
-        } else {
-            messageLabel.setStyle("-fx-background-color: lightgreen; -fx-background-radius: 15; -fx-text-fill: black;");
-        }
+        bubbleContainer.getChildren().addAll(senderLabel, messageTextFlow, bottomLabel);
 
         HBox messageBubble = new HBox();
         messageBubble.getChildren().add(bubbleContainer);
@@ -297,6 +300,10 @@ public class MainController {
         } else {
             messageBubble.setAlignment(Pos.CENTER_LEFT);
         }
+
+        // Ensure dynamic height adjustments are allowed
+        messageBubble.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        bubbleContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
         outputContainer.getChildren().add(messageBubble);
     }
