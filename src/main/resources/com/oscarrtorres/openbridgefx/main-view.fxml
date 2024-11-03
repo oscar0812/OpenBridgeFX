@@ -11,41 +11,36 @@
 <?import javafx.scene.control.SplitPane?>
 
 <?import javafx.scene.control.ChoiceBox?>
-<SplitPane dividerPositions="0.25" xmlns:fx="http://javafx.com/fxml"
+<SplitPane dividerPositions="0.1, 0.5" xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.oscarrtorres.openbridgefx.MainController">
 
-    <!-- Left side: Large text area for input/output -->
     <items>
 
-        <!-- Right side: Key-Value input fields and Send button -->
+        <!-- Left section (20%): Chat History -->
+        <VBox spacing="10.0">
+            <Label text="Chat History"/>
+            <ScrollPane fx:id="historyScrollPane" fitToWidth="true" vbarPolicy="AS_NEEDED">
+                <VBox fx:id="historyContainer">
+                    <!-- Chat history items will be added here -->
+                </VBox>
+            </ScrollPane>
+        </VBox>
+
+        <!-- Middle section (30%): Prompt and Parameters -->
         <VBox spacing="10.0">
             <padding>
                 <Insets top="10.0" right="10.0" bottom="10.0" left="10.0"/>
             </padding>
-
-            <!-- Label for ComboBox -->
-            <Label text="Load previous conversation:"/>
-
-            <!-- Dropdown (ComboBox) -->
-            <ComboBox fx:id="conversationComboBox" prefWidth="200.0"/>
-
-            <!-- Label -->
             <Label text="Prompt" alignment="CENTER_LEFT"/>
-
-            <!-- Large Text Area for Prompt -->
-            <TextArea fx:id="promptTextArea" wrapText="true" promptText="Enter your prompt here..."
-                      prefHeight="400.0"/>
-
-            <!-- ScrollPane to hold parameter inputs -->
+            <TextArea fx:id="promptTextArea" wrapText="true" promptText="Enter your prompt here..." prefHeight="400.0"/>
             <ScrollPane fx:id="parameterScrollPane" fitToWidth="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" managed="false">
                 <VBox fx:id="parameterContainer" spacing="10.0" style="-fx-background-color: transparent;"/>
             </ScrollPane>
-
-            <!-- Send Button -->
             <Button text="Send" onAction="#onSendButtonClick" maxWidth="Infinity"/>
         </VBox>
 
-        <VBox spacing="10.0" fx:id="outputVbox">
+        <!-- Right section (50%): Current Chat Output -->
+        <VBox spacing="10.0">
             <ScrollPane fx:id="outputScrollPane" fitToWidth="true" vbarPolicy="AS_NEEDED">
                 <VBox fx:id="outputContainer" spacing="10.0" style="-fx-padding: 10;">
                     <!-- Messages will be added here -->
@@ -55,3 +50,4 @@
 
     </items>
 </SplitPane>
+

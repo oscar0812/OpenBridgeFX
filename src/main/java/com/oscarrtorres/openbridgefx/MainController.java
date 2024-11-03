@@ -1,19 +1,19 @@
 package com.oscarrtorres.openbridgefx;
 
 import com.knuddels.jtokkit.api.ModelType;
-import com.oscarrtorres.openbridgefx.models.ConversationEntry;
+import com.oscarrtorres.openbridgefx.models.ChatData;
+import com.oscarrtorres.openbridgefx.models.ChatEntry;
 import com.oscarrtorres.openbridgefx.models.EnvData;
 import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
 import com.oscarrtorres.openbridgefx.services.ApiService;
-import com.oscarrtorres.openbridgefx.services.ConversationLogService;
+import com.oscarrtorres.openbridgefx.services.ChatService;
 import com.oscarrtorres.openbridgefx.services.Toast;
 import com.oscarrtorres.openbridgefx.services.TokenService;
 import io.github.cdimascio.dotenv.Dotenv;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -26,10 +26,9 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.Window;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,8 +36,6 @@ public class MainController {
 
     @FXML
     private VBox outputContainer;
-    @FXML
-    private ComboBox<String> conversationComboBox;
     @FXML
     private VBox outputVbox;
     @FXML
@@ -50,12 +47,17 @@ public class MainController {
     @FXML
     private ScrollPane parameterScrollPane;
 
+    @FXML
+    private VBox historyContainer;
+
     private static final double PARAMETER_HEIGHT = 60.0;
     private static final double MAX_SCROLLPANE_HEIGHT = 300.0;
 
-    private final ConversationLogService conversationLogService = new ConversationLogService();
+    private final ChatService chatService = new ChatService();
     private TokenService tokenService;
     private final EnvData envData = new EnvData();
+
+    List<ChatData> chatHistory = new ArrayList<>();
 
     @FXML
     public void initialize() {
@@ -72,14 +74,84 @@ public class MainController {
         parameterScrollPane.setVisible(false);
         parameterScrollPane.setManaged(false);
 
-        // Set items for the ComboBox
-        ObservableList<String> options = FXCollections.observableArrayList(conversationLogService.getConversationFileNames());
+        setChatHistory();
+    }
 
-        // Set items for the ComboBox
-        conversationComboBox.setItems(options);
-        conversationComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            onComboBoxChange(newValue);
-        });
+    private void setChatHistory() {
+        // Adding some dummy data
+        chatHistory = chatService.getChatDataFromFiles();
+        updateChatHistoryList();
+    }
+
+    private void updateChatHistoryList() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        chatHistory.sort(Comparator.comparing(chatData -> {
+            String timestamp = chatData.getTimestamp();
+            if (timestamp == null) {
+                // Place null timestamps first
+                return null;
+            }
+            // Parse the timestamp string into LocalDateTime
+            return LocalDateTime.parse(timestamp, formatter);
+        }, Comparator.nullsFirst(Comparator.reverseOrder())));
+
+        historyContainer.getChildren().clear();
+
+        // Populate the VBox with chat history data
+        for (ChatData chat : chatHistory) {
+            createChatDataRow(chat);
+        }
+
+    }
+
+    private void createChatDataRow(ChatData chat) {
+        ChatEntry lastEntry = chat.getLastChatEntry();
+        // Create a VBox for the chat entry
+        VBox chatEntry = new VBox();
+        chatEntry.setPadding(new Insets(10)); // Set padding for the entire chat entry
+        chatEntry.setSpacing(5); // Set spacing between elements
+        chatEntry.setUserData(chat);
+
+        // Create the message text (paragraph)
+        Text messageText = new Text(lastEntry.getFinalPrompt());
+        messageText.setFont(new Font("Arial", 14));
+
+        // Create the charge text
+        String subInfoText = lastEntry.getTimestamp()+ " | " + chat.getTotalCharge();
+        Text subInfo = new Text(subInfoText);
+        subInfo.setFont(new Font("Arial", 12));
+        subInfo.setFill(Color.GRAY);
+
+        // Create a horizontal line (separator)
+        Separator separator = new Separator();
+        separator.setStyle("-fx-background-color: lightgray;"); // Customize line color
+
+        // Add all elements to the chat entry
+        chatEntry.getChildren().addAll(messageText, subInfo);
+
+        // Add the chat entry to the history VBox
+        historyContainer.getChildren().addAll(chatEntry, separator);
+
+        chatEntry.setCursor(javafx.scene.Cursor.HAND);
+        chatEntry.setOnMouseClicked(event -> onChatHistoryClick(chat));
+    }
+
+    private Node findChatHistoryBox(ChatData targetChatData) {
+        // Iterate through all children of the history container
+        for (Node node : historyContainer.getChildren()) {
+            // Check if the node is an instance of VBox
+            if (node instanceof VBox chatEntry) {
+                // Get the userData from the chat entry
+                ChatData chatData = (ChatData) chatEntry.getUserData();
+
+                // Compare with the target ChatData
+                if (chatData.equals(targetChatData)) {
+                    return node; // Found the matching ChatData
+                }
+            }
+        }
+        return null; // No matching ChatData found
     }
 
     private void checkEnvFile() {
@@ -117,13 +189,11 @@ public class MainController {
         alert.showAndWait();
     }
 
-    private void onComboBoxChange(String selectedOption) {
-        conversationLogService.setFileName(selectedOption);
-
-        ObservableList<ConversationEntry> conversation = conversationLogService.loadFromJsonFile(selectedOption);
+    private void onChatHistoryClick(ChatData chatData) {
+        chatService.setCurrentChatData(chatData);
 
         clearMessageBubbles();
-        for (ConversationEntry entry : conversation) {
+        for (ChatEntry entry : chatData.getChatEntries()) {
             addMessageBubble(entry, true);
             addMessageBubble(entry, false);
         }
@@ -204,10 +274,10 @@ public class MainController {
 
     @FXML
     public void onSendButtonClick() {
-        ConversationEntry conversationEntry = new ConversationEntry();
-        conversationEntry.setTimestamp(conversationLogService.getCurrentTimestamp());
+        ChatEntry chatEntry = new ChatEntry();
+        chatEntry.setTimestamp(chatService.getCurrentTimestamp());
 
-        conversationEntry.setRawPrompt(promptTextArea.getText());
+        chatEntry.setRawPrompt(promptTextArea.getText());
         Map<String, String> parameters = new HashMap<>();
 
         // Collect parameter key-value pairs from the parameter container
@@ -224,45 +294,46 @@ public class MainController {
                 }
             }
         }
-        conversationEntry.setParameters(parameters);
+        chatEntry.setParameters(parameters);
 
         // Replace placeholders in prompt with parameter values
-        String parsedPrompt = conversationEntry.getRawPrompt();
+        String parsedPrompt = chatEntry.getRawPrompt();
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
             String placeholder = "{" + entry.getKey() + "}";
             parsedPrompt = parsedPrompt.replace(placeholder, entry.getValue());
         }
 
-        conversationEntry.setFinalPrompt(parsedPrompt);
-        conversationEntry.setPromptInfo(tokenService.getPromptInfo(parsedPrompt));
+        chatEntry.setFinalPrompt(parsedPrompt);
+        chatEntry.setPromptInfo(tokenService.getPromptInfo(parsedPrompt));
 
-        addMessageBubble(conversationEntry, true);
+        addMessageBubble(chatEntry, true);
 
         // Create and start the GPT API service
-        ApiService gptApiService = new ApiService(conversationEntry.getFinalPrompt(), envData);
+        ApiService gptApiService = new ApiService(chatEntry.getFinalPrompt(), envData);
 
         gptApiService.setOnSucceeded(event -> {
             String gptResponse = gptApiService.getValue();
-            conversationEntry.setResponse(gptResponse);
-            conversationEntry.setResponseInfo(tokenService.getResponseInfo(gptResponse));
+            chatEntry.setResponse(gptResponse);
+            chatEntry.setResponseInfo(tokenService.getResponseInfo(gptResponse));
 
-            addMessageBubble(conversationEntry, false); // Add GPT response as received message
+            addMessageBubble(chatEntry, false); // Add GPT response as received message
 
-            // Create a LogEntry object with the necessary details
-            // Save the log entry using the updated saveEntryToFile method
-            conversationLogService.saveEntryToFile(conversationEntry);
+            chatService.getCurrentChatData().addChatEntry(chatEntry);
+            chatService.saveChatData();
+
+            updateChatHistoryList();
         });
 
         gptApiService.setOnFailed(event -> {
             Throwable exception = gptApiService.getException();
-            conversationEntry.setResponse("Error: " + exception.getMessage());
-            addMessageBubble(conversationEntry, false); // Handle error
+            chatEntry.setResponse("Error: " + exception.getMessage());
+            addMessageBubble(chatEntry, false); // Handle error
         });
 
         gptApiService.start(); // Start the service
     }
 
-    private void addMessageBubble(ConversationEntry entry, boolean isSent) {
+    private void addMessageBubble(ChatEntry entry, boolean isSent) {
         String message = isSent ? entry.getFinalPrompt() : entry.getResponse();
         String timestamp = entry.getTimestamp();
 
@@ -318,7 +389,7 @@ public class MainController {
     }
 
     private void onSentMessageBubbleClick(HBox messageBubble) {
-        ConversationEntry data = (ConversationEntry) messageBubble.getUserData();
+        ChatEntry data = (ChatEntry) messageBubble.getUserData();
 
         promptTextArea.setText(data.getRawPrompt()); // will trigger updateParameters()
 
@@ -343,7 +414,7 @@ public class MainController {
     }
 
     private void onResponseMessageBubbleClick(HBox messageBubble) {
-        ConversationEntry data = (ConversationEntry) messageBubble.getUserData();
+        ChatEntry data = (ChatEntry) messageBubble.getUserData();
 
         promptTextArea.setText(data.getResponse()); // will trigger updateParameters()
 

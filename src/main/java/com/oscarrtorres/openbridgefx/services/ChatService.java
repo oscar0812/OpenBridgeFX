@@ -1,6 +1,7 @@
 package com.oscarrtorres.openbridgefx.services;
 
-import com.oscarrtorres.openbridgefx.models.ConversationEntry;
+import com.oscarrtorres.openbridgefx.models.ChatData;
+import com.oscarrtorres.openbridgefx.models.ChatEntry;
 import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -19,12 +20,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ConversationLogService {
+public class ChatService {
 
-    private String logFilePath;
     private static final String SUB_PATH = "conversations/";
+    private ChatData currentChatData;
 
-    public ConversationLogService() {
+    public ChatService() {
         Path logsDirPath = Paths.get(SUB_PATH);
 
         // Check if directory exists, if not, create it
@@ -34,74 +35,69 @@ public class ConversationLogService {
                 System.out.println("Created '" + SUB_PATH + "' directory.");
             }
 
-            String fileName = getCurrentTimestamp().replaceAll("[^a-zA-Z0-9._-]", "_");
-            this.setFileName(fileName);
+            String fileName = getCurrentTimestamp().replaceAll("[^a-zA-Z0-9._-]", "_") + ".json";
+            this.currentChatData = new ChatData();
+            this.currentChatData.setFileName(fileName);
+            this.currentChatData.setChatEntries(FXCollections.observableArrayList());
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void setFileName(String fileName) {
-        if (!fileName.endsWith(".json")) {
-            this.logFilePath = SUB_PATH + fileName + ".json";
-        } else {
-            this.logFilePath = SUB_PATH + fileName;
-        }
+    public void setCurrentChatData(ChatData chatData) {
+        this.currentChatData = chatData;
     }
 
+    public ChatData getCurrentChatData() {
+        return currentChatData;
+    }
 
-    public void saveEntryToFile(ConversationEntry conversationEntry) {
-        JSONArray logArray = new JSONArray();
+    public void saveChatData() {
+        String filePath = SUB_PATH + this.currentChatData.getFileName();
+        JSONArray jsonArray = new JSONArray();
+        ObservableList<ChatEntry> chatEntries = this.currentChatData.getChatEntries();
 
-        // Load existing log entries from the file (if the file exists)
-        try {
-            File logFile = new File(logFilePath);
-            if (logFile.exists()) {
-                String existingData = Files.readString(Paths.get(logFilePath));
-                logArray = new JSONArray(existingData);
+        for (ChatEntry entry : chatEntries) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("timestamp", entry.getTimestamp());
+            jsonObject.put("rawPrompt", entry.getRawPrompt());
+            jsonObject.put("finalPrompt", entry.getFinalPrompt());
+            jsonObject.put("response", entry.getResponse());
+
+            // Convert parameters to JSONObject
+            JSONObject parametersJson = new JSONObject(entry.getParameters());
+            jsonObject.put("parameters", parametersJson);
+
+            // Add token cost info if present
+            if (entry.getPromptInfo() != null) {
+                JSONObject promptTokenJson = new JSONObject();
+                promptTokenJson.put("tokenCount", entry.getPromptInfo().getTokenCount());
+                promptTokenJson.put("totalCost", entry.getPromptInfo().getTotalCost());
+                jsonObject.put("promptTokenInfo", promptTokenJson);
             }
-        } catch (IOException e) {
-            e.printStackTrace(); // Handle the error (could log it or notify the user)
+
+            if (entry.getResponseInfo() != null) {
+                JSONObject responseTokenJson = new JSONObject();
+                responseTokenJson.put("tokenCount", entry.getResponseInfo().getTokenCount());
+                responseTokenJson.put("totalCost", entry.getResponseInfo().getTotalCost());
+                jsonObject.put("responseTokenInfo", responseTokenJson);
+            }
+
+            // Add the JSON object to the JSON array
+            jsonArray.put(jsonObject);
         }
-
-        // Create new JSON object from LogEntry
-        JSONObject logEntryJson = new JSONObject();
-        logEntryJson.put("timestamp", conversationEntry.getTimestamp());
-        logEntryJson.put("rawPrompt", conversationEntry.getRawPrompt());
-        logEntryJson.put("finalPrompt", conversationEntry.getFinalPrompt());
-        logEntryJson.put("parameters", conversationEntry.getParameters());
-        logEntryJson.put("response", conversationEntry.getResponse());
-
-        // Convert promptTokenInfo to JSON
-        if (conversationEntry.getPromptInfo() != null) {
-            JSONObject promptTokenJson = new JSONObject();
-            promptTokenJson.put("tokenCount", conversationEntry.getPromptInfo().getTokenCount());
-            promptTokenJson.put("totalCost", conversationEntry.getPromptInfo().getTotalCost());
-            logEntryJson.put("promptTokenInfo", promptTokenJson);
-        }
-
-        // Convert responseTokenInfo to JSON
-        if (conversationEntry.getResponseInfo() != null) {
-            JSONObject responseTokenJson = new JSONObject();
-            responseTokenJson.put("tokenCount", conversationEntry.getResponseInfo().getTokenCount());
-            responseTokenJson.put("totalCost", conversationEntry.getResponseInfo().getTotalCost());
-            logEntryJson.put("responseTokenInfo", responseTokenJson);
-        }
-
-        // Append the new log entry to the array
-        logArray.put(logEntryJson);
 
         // Write the updated log array back to the file
-        try (FileWriter file = new FileWriter(logFilePath)) {
-            file.write(logArray.toString(4)); // Indented JSON for readability
+        try (FileWriter file = new FileWriter(filePath)) {
+            file.write(jsonArray.toString(4)); // Indented JSON for readability
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public ObservableList<ConversationEntry> loadFromJsonFile(String logFileName) {
+    public ChatData loadFromJsonFile(String logFileName) {
         String logFilePath = SUB_PATH + logFileName;
-        ObservableList<ConversationEntry> logEntries = FXCollections.observableArrayList();
+        ObservableList<ChatEntry> logEntries = FXCollections.observableArrayList();
 
         try {
             // Read the JSON file as a string
@@ -140,7 +136,7 @@ public class ConversationLogService {
                 }
 
                 // Create a ConversationEntry object from JSON
-                ConversationEntry conversationEntry = new ConversationEntry(
+                ChatEntry chatEntry = new ChatEntry(
                         logEntryJson.optString("timestamp"),
                         logEntryJson.optString("rawPrompt"),
                         logEntryJson.optString("response"),
@@ -151,40 +147,57 @@ public class ConversationLogService {
                         responseTokenInfo
                 );
 
-                logEntries.add(conversationEntry);
+                logEntries.add(chatEntry);
             }
+
+
         } catch (IOException e) {
             e.printStackTrace(); // Handle error while reading the file
         } catch (Exception e) {
             e.printStackTrace(); // Handle any JSON parsing errors
         }
 
-        return logEntries;
+        // set ChatData
+        ChatData chatData = new ChatData();
+        chatData.setFileName(logFileName);
+        chatData.setChatEntries(logEntries);
+        chatData.setTotalCharge(logEntries.stream()
+                .mapToDouble(e -> e.getPromptInfo().getTotalCost() + e.getResponseInfo().getTotalCost()) // Extract the cost as a double stream
+                .sum());
+        chatData.setTimestamp(logEntries.get(logEntries.size()-1).getTimestamp());
+
+        return chatData;
     }
 
 
-    public List<String> getConversationFileNames() {
+    public List<ChatData> getChatDataFromFiles() {
         Path logDirectory = Paths.get(SUB_PATH);
 
-        List<String> logFileNames = new LinkedList<>();
-
+        List<ChatData> chatDataList = new ArrayList<>();
         // Check if the directory exists and is a directory
         if (Files.exists(logDirectory) && Files.isDirectory(logDirectory)) {
             try {
 
-                logFileNames = Files.list(logDirectory)
+                chatDataList = Files.list(logDirectory)
                         .filter(path -> path.toString().endsWith(".json"))
+                        .sorted(Comparator.comparingLong(path -> {
+                            try {
+                                return Files.getLastModifiedTime((Path) path).toMillis();
+                            } catch (Exception e) {
+                                // Handle exception, e.g., log or return a default value
+                                return 0; // or some other fallback value
+                            }
+                        }).reversed()) // Reverse to get latest first
                         .map(Path::getFileName)
                         .map(Path::toString)
-                        .sorted(Comparator.reverseOrder())
-                        .collect(Collectors.toList());
+                        .map(this::loadFromJsonFile)
+                        .collect(Collectors.toCollection(ArrayList::new));
 
-                System.out.println(logFileNames);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        return logFileNames;
+        return chatDataList;
     }
 
     // Utility method to get the current timestamp

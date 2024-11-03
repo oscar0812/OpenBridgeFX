@@ -3,7 +3,7 @@ package com.oscarrtorres.openbridgefx.models;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConversationEntry {
+public class ChatEntry {
     private String timestamp;
     private String rawPrompt;
     private String response;
@@ -15,7 +15,7 @@ public class ConversationEntry {
     private TokenCostInfo promptInfo;
     private TokenCostInfo responseInfo;
 
-    public ConversationEntry() {
+    public ChatEntry() {
         this.timestamp = null;
         this.rawPrompt = "";
         this.response = "";
@@ -23,8 +23,8 @@ public class ConversationEntry {
         this.parameters = new HashMap<>();
     }
 
-    public ConversationEntry(String timestamp, String rawPrompt, String response, String finalPrompt,
-                             Map<String, String> parameters, boolean loadedFromJson, TokenCostInfo promptTokenInfo, TokenCostInfo responseTokenInfo) {
+    public ChatEntry(String timestamp, String rawPrompt, String response, String finalPrompt,
+                     Map<String, String> parameters, boolean loadedFromJson, TokenCostInfo promptTokenInfo, TokenCostInfo responseTokenInfo) {
         this.timestamp = timestamp;
         this.rawPrompt = rawPrompt;
         this.response = response;
