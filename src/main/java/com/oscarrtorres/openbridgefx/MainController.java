@@ -6,6 +6,7 @@ import com.oscarrtorres.openbridgefx.models.EnvData;
 import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
 import com.oscarrtorres.openbridgefx.services.ApiService;
 import com.oscarrtorres.openbridgefx.services.ConversationLogService;
+import com.oscarrtorres.openbridgefx.services.Toast;
 import com.oscarrtorres.openbridgefx.services.TokenService;
 import io.github.cdimascio.dotenv.Dotenv;
 import javafx.collections.FXCollections;
@@ -22,6 +23,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.Window;
 
 import java.io.File;
 import java.util.HashMap;
@@ -63,7 +65,9 @@ public class MainController {
             updateParameters(newValue);
         });
 
-        outputScrollPane.vvalueProperty().bind(outputContainer.heightProperty());
+        outputContainer.heightProperty().addListener((observable, oldValue, newValue) -> {
+            outputScrollPane.setVvalue(1.0);  // Scrolls to the bottom
+        });
 
         parameterScrollPane.setVisible(false);
         parameterScrollPane.setManaged(false);
@@ -290,15 +294,16 @@ public class MainController {
         bubbleContainer.getChildren().addAll(senderLabel, messageTextFlow, bottomLabel);
 
         HBox messageBubble = new HBox();
+        messageBubble.setUserData(entry);
+        messageBubble.setCursor(javafx.scene.Cursor.HAND);
         messageBubble.getChildren().add(bubbleContainer);
 
         if (isSent) {
             messageBubble.setAlignment(Pos.CENTER_RIGHT);
-            messageBubble.setUserData(entry);
-            messageBubble.setCursor(javafx.scene.Cursor.HAND);
-            messageBubble.setOnMouseClicked(event -> onMessageBubbleClick(messageBubble));
+            messageBubble.setOnMouseClicked(event -> onSentMessageBubbleClick(messageBubble));
         } else {
             messageBubble.setAlignment(Pos.CENTER_LEFT);
+            messageBubble.setOnMouseClicked(event -> onResponseMessageBubbleClick(messageBubble));
         }
 
         // Ensure dynamic height adjustments are allowed
@@ -312,7 +317,7 @@ public class MainController {
         outputContainer.getChildren().clear();
     }
 
-    private void onMessageBubbleClick(HBox messageBubble) {
+    private void onSentMessageBubbleClick(HBox messageBubble) {
         ConversationEntry data = (ConversationEntry) messageBubble.getUserData();
 
         promptTextArea.setText(data.getRawPrompt()); // will trigger updateParameters()
@@ -330,5 +335,28 @@ public class MainController {
 
         parameterScrollPane.setVisible(!data.getParameters().isEmpty());
         parameterScrollPane.setManaged(!data.getParameters().isEmpty());
+
+        copyTextToClipboard(data.getFinalPrompt());
+
+        Window stage = outputScrollPane.getScene().getWindow();
+        Toast.makeText(stage, "Copied to clipboard!");
+    }
+
+    private void onResponseMessageBubbleClick(HBox messageBubble) {
+        ConversationEntry data = (ConversationEntry) messageBubble.getUserData();
+
+        promptTextArea.setText(data.getResponse()); // will trigger updateParameters()
+
+        copyTextToClipboard(data.getResponse());
+
+        Window stage = outputScrollPane.getScene().getWindow();
+        Toast.makeText(stage, "Copied to clipboard!");
+    }
+
+    private void copyTextToClipboard(String text) {
+        javafx.scene.input.Clipboard clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
+        javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+        content.putString(text);
+        clipboard.setContent(content);
     }
 }
