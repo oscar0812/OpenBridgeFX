@@ -13,6 +13,8 @@ module com.oscarrtorres.openbridgefx {
     requires org.json;
     requires io.github.cdimascio.dotenv.java;
     requires jtokkit;
+    requires org.commonmark;
+    requires java.desktop;
 
     opens com.oscarrtorres.openbridgefx to javafx.fxml;
     exports com.oscarrtorres.openbridgefx;

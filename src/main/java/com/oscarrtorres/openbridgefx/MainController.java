@@ -10,25 +10,36 @@ import com.oscarrtorres.openbridgefx.services.ChatService;
 import com.oscarrtorres.openbridgefx.services.Toast;
 import com.oscarrtorres.openbridgefx.services.TokenService;
 import io.github.cdimascio.dotenv.Dotenv;
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.Window;
+import javafx.util.Duration;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 
+import java.awt.*;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,7 +89,6 @@ public class MainController {
     }
 
     private void setChatHistory() {
-        // Adding some dummy data
         chatHistory = chatService.getChatDataFromFiles();
         updateChatHistoryList();
     }
@@ -113,8 +123,10 @@ public class MainController {
         chatEntry.setSpacing(5); // Set spacing between elements
         chatEntry.setUserData(chat);
 
-        // Create the message text (paragraph)
-        Text messageText = new Text(lastEntry.getFinalPrompt());
+        String fullText = lastEntry.getFinalPrompt();
+        String displayedText = (fullText.length() > 30) ? fullText.substring(0, 30) + "..." : fullText;
+
+        Text messageText = new Text(displayedText);
         messageText.setFont(new Font("Arial", 14));
 
         // Create the charge text
@@ -381,7 +393,82 @@ public class MainController {
         messageBubble.setPrefHeight(Region.USE_COMPUTED_SIZE);
         bubbleContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
+        setMessageBubbleHoverMenu(bubbleContainer, messageBubble, entry, message, isSent);
+
         outputContainer.getChildren().add(messageBubble);
+    }
+
+    // show menu when you hover over bubbles
+    private void setMessageBubbleHoverMenu(VBox bubbleContainer, HBox messageBubble, ChatEntry entry, String message, boolean isSent) {
+        // Create ContextMenu with options
+        ContextMenu contextMenu = new ContextMenu();
+
+        // Option 1 to replace TextFlow content with WebView
+        MenuItem option1 = new MenuItem("Show in WebView");
+        option1.setOnAction(event -> handleOption1(bubbleContainer, message, isSent));
+
+        // Option 2 (example of another option)
+        MenuItem option2 = new MenuItem("Option 2");
+        option2.setOnAction(event -> handleOption2(entry));
+
+        // Add options to the context menu
+        contextMenu.getItems().addAll(option1, option2);
+
+        PauseTransition hoverTimer = new PauseTransition(Duration.seconds(2));
+
+        messageBubble.setOnMouseEntered((MouseEvent event) -> {
+            hoverTimer.playFromStart();
+        });
+
+        // Start the hover timer and show the menu at the mouse coordinates after x seconds
+        hoverTimer.setOnFinished(event -> {
+                    Point p = MouseInfo.getPointerInfo().getLocation();
+                    contextMenu.show(messageBubble, p.x, p.y);
+                }
+        );
+
+        // Cancel the timer if mouse exits before the delay
+        messageBubble.setOnMouseExited(event -> hoverTimer.stop());
+    }
+
+
+    // Method to handle the first option click and display Markdown as HTML in WebView
+    private void handleOption1(VBox bubbleContainer, String markdownMessage, boolean isSent) {
+        // Convert Markdown to HTML using CommonMark
+        Parser parser = Parser.builder().build();
+        org.commonmark.node.Node document = parser.parse(markdownMessage);
+        HtmlRenderer renderer = HtmlRenderer.builder().build();
+        String htmlContent = renderer.render(document);
+
+        // Remove existing TextFlow from the bubble container
+        bubbleContainer.getChildren().removeIf(node -> node instanceof TextFlow);
+
+        // Create a StackPane to hold the WebView with the bubble's styling
+        StackPane webViewContainer = new StackPane();
+        webViewContainer.setMaxWidth(500); // Match the original width
+        webViewContainer.setPadding(new Insets(10));
+
+        // Apply bubble styling
+        String bubbleStyle = isSent
+                ? "-fx-background-color: lightblue; -fx-background-radius: 15; -fx-padding: 10;"
+                : "-fx-background-color: lightgreen; -fx-background-radius: 15; -fx-padding: 10;";
+        webViewContainer.setStyle(bubbleStyle);
+
+        // Create a WebView and load the HTML content
+        WebView webView = new WebView();
+        WebEngine webEngine = webView.getEngine();
+        webEngine.loadContent(htmlContent); // Load the converted HTML
+
+        // Add the WebView to the styled container
+        webViewContainer.getChildren().add(webView);
+
+        // Add the styled WebView container to the bubble container
+        bubbleContainer.getChildren().add(1, webViewContainer);  // Add in place of the TextFlow
+    }
+
+    // Sample method for the second option
+    private void handleOption2(ChatEntry entry) {
+        System.out.println("Option 2 clicked for entry: " + entry);
     }
 
     private void clearMessageBubbles() {
