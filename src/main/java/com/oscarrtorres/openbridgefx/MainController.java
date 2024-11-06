@@ -1,21 +1,16 @@
 package com.oscarrtorres.openbridgefx;
 
 import com.knuddels.jtokkit.api.ModelType;
-import com.oscarrtorres.openbridgefx.models.ChatData;
-import com.oscarrtorres.openbridgefx.models.ChatEntry;
-import com.oscarrtorres.openbridgefx.models.EnvData;
-import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
-import com.oscarrtorres.openbridgefx.services.ApiService;
-import com.oscarrtorres.openbridgefx.services.ChatService;
-import com.oscarrtorres.openbridgefx.services.Toast;
-import com.oscarrtorres.openbridgefx.services.TokenService;
+import com.oscarrtorres.openbridgefx.models.*;
+import com.oscarrtorres.openbridgefx.services.*;
 import io.github.cdimascio.dotenv.Dotenv;
 import javafx.animation.PauseTransition;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
@@ -33,9 +28,11 @@ import javafx.stage.Window;
 import javafx.util.Duration;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.vosk.Model;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -61,8 +58,13 @@ public class MainController {
     @FXML
     private VBox historyContainer;
 
-    private static final double PARAMETER_HEIGHT = 60.0;
-    private static final double MAX_SCROLLPANE_HEIGHT = 300.0;
+    private SpeechRecognizerData speechRecognizerData;
+    private SpeechRecognizerThread speechRecognizerThread;
+    private Thread speechThread;
+    private boolean isRecording = false;
+
+    private static final double PARAMETER_HEIGHT = 200.0;
+    private static final double MAX_SCROLLPANE_HEIGHT = 900.0;
 
     private final ChatService chatService = new ChatService();
     private TokenService tokenService;
@@ -71,7 +73,7 @@ public class MainController {
     List<ChatData> chatHistory = new ArrayList<>();
 
     @FXML
-    public void initialize() {
+    public void initialize() throws IOException {
         checkEnvFile();
 
         promptTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -86,6 +88,37 @@ public class MainController {
         parameterScrollPane.setManaged(false);
 
         setChatHistory();
+
+        loadSpeechRecognizerDataInBackground();
+    }
+
+    private void loadSpeechRecognizerDataInBackground() {
+        // Create a Task to load the SpeechRecognizerData in the background
+        Task<SpeechRecognizerData> loadDataTask = new Task<SpeechRecognizerData>() {
+            @Override
+            protected SpeechRecognizerData call() throws Exception {
+                // Perform the model loading in the background thread
+                return new SpeechRecognizerData("src/main/resources/vosk-models/vosk-model-en-us-0.42-gigaspeech");
+            }
+
+            @Override
+            protected void succeeded() {
+                // Update the speechRecognizerData on success (running on the JavaFX Application Thread)
+                speechRecognizerData = getValue();
+                System.out.println("Speech model loaded successfully.");
+                // You can update the UI here if necessary
+            }
+
+            @Override
+            protected void failed() {
+                // Show an error message if the task fails
+                Throwable exception = getException();
+                showErrorAlert("Failed to load model: " + exception.getMessage());
+            }
+        };
+
+        // Run the task in the background
+        new Thread(loadDataTask).start();
     }
 
     private void setChatHistory() {
@@ -147,23 +180,6 @@ public class MainController {
 
         chatEntry.setCursor(javafx.scene.Cursor.HAND);
         chatEntry.setOnMouseClicked(event -> onChatHistoryClick(chat));
-    }
-
-    private Node findChatHistoryBox(ChatData targetChatData) {
-        // Iterate through all children of the history container
-        for (Node node : historyContainer.getChildren()) {
-            // Check if the node is an instance of VBox
-            if (node instanceof VBox chatEntry) {
-                // Get the userData from the chat entry
-                ChatData chatData = (ChatData) chatEntry.getUserData();
-
-                // Compare with the target ChatData
-                if (chatData.equals(targetChatData)) {
-                    return node; // Found the matching ChatData
-                }
-            }
-        }
-        return null; // No matching ChatData found
     }
 
     private void checkEnvFile() {
@@ -278,11 +294,43 @@ public class MainController {
         valueField.setText(value);
         valueField.setPromptText("Enter your param value here...");
 
-        HBox.setHgrow(valueField, Priority.ALWAYS);
+        // Button to start/stop recording
+        Button button1 = new Button("Start Recording");
+        button1.setOnAction(event -> {
+            if (isRecording) {
+                stopRecording();
+                button1.setText("Start Recording");
+            } else {
+                startRecording(valueField);
+                button1.setText("Stop Recording");
+            }
+        });
 
-        parameterSet.getChildren().addAll(keyLabel, keyField, valueLabel, valueField);
+        HBox.setHgrow(valueField, Priority.ALWAYS);
+        parameterSet.getChildren().addAll(keyLabel, keyField, valueLabel, valueField, button1);
         parameterContainer.getChildren().add(parameterSet);
     }
+
+
+    private void startRecording(TextField valueField) {
+        try {
+            speechRecognizerThread = new SpeechRecognizerThread(valueField, speechRecognizerData);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        speechThread = new Thread(speechRecognizerThread);
+        speechThread.start();
+        isRecording = true;
+    }
+
+    private void stopRecording() {
+        if (speechRecognizerThread != null) {
+            speechRecognizerThread.stop();
+            speechThread.interrupt();
+            isRecording = false;
+        }
+    }
+
 
     @FXML
     public void onSendButtonClick() {
