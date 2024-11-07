@@ -2,6 +2,7 @@ package com.oscarrtorres.openbridgefx.services;
 
 import com.oscarrtorres.openbridgefx.models.ChatData;
 import com.oscarrtorres.openbridgefx.models.ChatEntry;
+import com.oscarrtorres.openbridgefx.models.Constants;
 import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,17 +23,16 @@ import java.util.stream.Collectors;
 
 public class ChatService {
 
-    private static final String SUB_PATH = "conversations/";
     private ChatData currentChatData;
 
     public ChatService() {
-        Path logsDirPath = Paths.get(SUB_PATH);
+        Path logsDirPath = Paths.get(Constants.CHATS_DIR_PATH);
 
         // Check if directory exists, if not, create it
         try {
             if (Files.notExists(logsDirPath)) {
                 Files.createDirectories(logsDirPath);
-                System.out.println("Created '" + SUB_PATH + "' directory.");
+                System.out.println("Created '" + Constants.CHATS_DIR_PATH + "' directory.");
             }
 
             String fileName = getCurrentTimestamp().replaceAll("[^a-zA-Z0-9._-]", "_") + ".json";
@@ -53,7 +53,7 @@ public class ChatService {
     }
 
     public void saveChatData() {
-        String filePath = SUB_PATH + this.currentChatData.getFileName();
+        String filePath = Constants.CHATS_DIR_PATH + this.currentChatData.getFileName();
         JSONArray jsonArray = new JSONArray();
         ObservableList<ChatEntry> chatEntries = this.currentChatData.getChatEntries();
 
@@ -96,7 +96,7 @@ public class ChatService {
     }
 
     public ChatData loadFromJsonFile(String logFileName) {
-        String logFilePath = SUB_PATH + logFileName;
+        String logFilePath = Constants.CHATS_DIR_PATH + logFileName;
         ObservableList<ChatEntry> logEntries = FXCollections.observableArrayList();
 
         try {
@@ -171,7 +171,7 @@ public class ChatService {
 
 
     public List<ChatData> getChatDataFromFiles() {
-        Path logDirectory = Paths.get(SUB_PATH);
+        Path logDirectory = Paths.get(Constants.CHATS_DIR_PATH);
 
         List<ChatData> chatDataList = new ArrayList<>();
         // Check if the directory exists and is a directory

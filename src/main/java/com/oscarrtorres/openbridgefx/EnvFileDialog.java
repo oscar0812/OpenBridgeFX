@@ -1,6 +1,7 @@
 package com.oscarrtorres.openbridgefx;
 
 import com.knuddels.jtokkit.api.ModelType;
+import com.oscarrtorres.openbridgefx.models.Constants;
 import com.oscarrtorres.openbridgefx.models.EnvData;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -108,7 +109,7 @@ public class EnvFileDialog {
         }
     }
     private void saveEnvFile(EnvData envData) {
-        try (FileWriter writer = new FileWriter(".env")) {
+        try (FileWriter writer = new FileWriter(Constants.ENV_FILE_PATH)) {
             writer.write("API_KEY=" + envData.getApiKey() + "\n");
             writer.write("API_URL=" + envData.getApiUrl() + "\n");
             writer.write("MODEL=" + envData.getModel() + "\n");
