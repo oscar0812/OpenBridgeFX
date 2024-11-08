@@ -7,10 +7,8 @@ import io.github.cdimascio.dotenv.Dotenv;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -44,7 +42,13 @@ public class FileUtils {
         }
     }
 
-    public static void extractZipFile(Path zipFilePath) {
+    public static void extractZipFile(Path zipFilePath, boolean deleteOldExtract) {
+        if(deleteOldExtract) {
+            String fileNameWithoutExtension = zipFilePath.getFileName().toString().replaceFirst("\\.zip$", "");
+            Path extractDir = zipFilePath.getParent().resolve(fileNameWithoutExtension);
+            FileUtils.deleteFilePath(extractDir);
+        }
+
         try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFilePath))) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
@@ -69,8 +73,29 @@ public class FileUtils {
     }
 
     public static void deleteFilePath(Path filePath) {
+        if(!Files.exists(filePath)) {
+            System.out.println("Nothing to delete");
+            return;
+        }
         try {
-            Files.delete(filePath);
+            if (Files.isDirectory(filePath)) {
+                Files.walkFileTree(filePath, new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Files.delete(file);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        Files.delete(dir);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } else {
+                // Delete single file
+                Files.delete(filePath);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

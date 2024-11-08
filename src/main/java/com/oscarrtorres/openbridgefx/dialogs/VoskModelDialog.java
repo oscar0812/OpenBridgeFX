@@ -14,11 +14,11 @@ import javafx.scene.layout.VBox;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Objects;
 
 public class VoskModelDialog {
 
@@ -71,7 +71,7 @@ public class VoskModelDialog {
             radioButton.setToggleGroup(toggleGroup);
             radioButton.setUserData(model);
 
-            if(modelExists && envData.getVoskModel().equals(model.getName())) {
+            if(modelExists && !Objects.isNull(envData.getVoskModel()) && envData.getVoskModel().equals(model.getName())) {
                 radioButton.setSelected(true);
             }
 
@@ -88,18 +88,19 @@ public class VoskModelDialog {
             downloadButton.setOnAction(e -> {
                 String modelNameText = model.getName();
                 String modelUrl = model.getZipUrl();
+                downloadButton.setDisable(true);
                 okButton.setDisable(true);
 
                 // Task to download the model with added exception handling
                 Task<Void> downloadTask = new Task<>() {
                     @Override
                     protected Void call() throws Exception {
-                        Path targetPath = Path.of(Constants.MODELS_DIR_PATH, modelUrl.substring(modelUrl.lastIndexOf('/') + 1));
-                        Files.createDirectories(targetPath.getParent());
+                        Path zipFilePath = Path.of(Constants.MODELS_DIR_PATH, modelUrl.substring(modelUrl.lastIndexOf('/') + 1));
+                        Files.createDirectories(zipFilePath.getParent());
 
-                        try (InputStream in = new URL(modelUrl).openStream();
-                             OutputStream out = Files.newOutputStream(targetPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-                            long fileSize = new URL(modelUrl).openConnection().getContentLengthLong();
+                        try (InputStream in = new URI(modelUrl).toURL().openStream();
+                             OutputStream out = Files.newOutputStream(zipFilePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                            long fileSize = new URI(modelUrl).toURL().openConnection().getContentLengthLong();
                             if (fileSize == -1) {
                                 throw new Exception("Could not retrieve file size, download may be incomplete.");
                             }
@@ -122,9 +123,8 @@ public class VoskModelDialog {
                             e.printStackTrace();
                             throw e;
                         }
-
-                        FileUtils.extractZipFile(targetPath);
-                        FileUtils.deleteFilePath(targetPath);
+                        FileUtils.extractZipFile(zipFilePath, true);
+                        FileUtils.deleteFilePath(zipFilePath);
                         return null;
                     }
                 };
@@ -138,15 +138,17 @@ public class VoskModelDialog {
                     progressBar.setVisible(false);
                     radioButton.setDisable(false);
                     radioButton.setSelected(true);
+                    downloadButton.setDisable(false);
                     okButton.setDisable(false);
                 });
                 downloadTask.setOnFailed(event -> {
                     Throwable exception = downloadTask.getException();
                     if (exception != null) {
-                        System.err.println("Error: " + exception.getMessage());
+                        exception.printStackTrace();
                     }
                     controller.showErrorAlert("Download failed for: " + modelNameText);
                     progressBar.setVisible(false);
+                    downloadButton.setDisable(false);
                     okButton.setDisable(false);
                 });
 
@@ -175,7 +177,7 @@ public class VoskModelDialog {
 
         // Set the custom content of the alert dialog
         alert.getDialogPane().setContent(modelList);
-        alert.getDialogPane().setPrefSize(650, 300);
+        alert.getDialogPane().setPrefSize(650, models.length * 60);
         alert.showAndWait();
     }
 }
