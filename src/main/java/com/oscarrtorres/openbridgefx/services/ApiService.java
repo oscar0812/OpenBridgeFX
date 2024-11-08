@@ -1,34 +1,24 @@
 package com.oscarrtorres.openbridgefx.services;
 
-import com.oscarrtorres.openbridgefx.models.EnvData;
-import io.github.cdimascio.dotenv.Dotenv;
+import com.oscarrtorres.openbridgefx.models.YamlData;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.scene.control.Label;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class ApiService extends Service<String> {
 
-    private final EnvData envData;
+    private final YamlData yamlData;
     private final String prompt;
 
-    public ApiService(String prompt, EnvData envData) {
-        this.envData = envData;
+    public ApiService(String prompt, YamlData yamlData) {
+        this.yamlData = yamlData;
         this.prompt = prompt;
     }
 
@@ -37,16 +27,16 @@ public class ApiService extends Service<String> {
         return new Task<>() {
             @Override
             protected String call() throws Exception {
-                URL url = new URL(envData.getApiUrl());
+                URL url = new URL(yamlData.getApiUrl());
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
-                connection.setRequestProperty("Authorization", "Bearer " + envData.getApiKey());
+                connection.setRequestProperty("Authorization", "Bearer " + yamlData.getApiKey());
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
                 // Create a JSON object for the request
                 JSONObject requestBody = new JSONObject();
-                requestBody.put("model", envData.getModel());
+                requestBody.put("model", yamlData.getChatGptModel());
 
                 // Create the messages array
                 JSONArray messages = new JSONArray();

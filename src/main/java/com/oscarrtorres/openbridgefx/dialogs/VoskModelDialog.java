@@ -2,7 +2,7 @@ package com.oscarrtorres.openbridgefx.dialogs;
 
 import com.oscarrtorres.openbridgefx.MainController;
 import com.oscarrtorres.openbridgefx.models.Constants;
-import com.oscarrtorres.openbridgefx.models.EnvData;
+import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.models.VoskModel;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import javafx.concurrent.Task;
@@ -29,7 +29,7 @@ public class VoskModelDialog {
     }
 
     public void showDialog() {
-        EnvData envData = FileUtils.getEnvData();
+        YamlData yamlData = FileUtils.getYamlData();
 
         // Create an alert dialog with a custom content
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -71,7 +71,7 @@ public class VoskModelDialog {
             radioButton.setToggleGroup(toggleGroup);
             radioButton.setUserData(model);
 
-            if(modelExists && !Objects.isNull(envData.getVoskModel()) && envData.getVoskModel().equals(model.getName())) {
+            if(modelExists && !Objects.isNull(yamlData.getVoskModel()) && yamlData.getVoskModel().equals(model.getName())) {
                 radioButton.setSelected(true);
             }
 
@@ -165,9 +165,9 @@ public class VoskModelDialog {
                 VoskModel voskModel = (VoskModel) selectedButton.getUserData();
                 System.out.println("Selected model: " + voskModel.getName());
 
-                envData.setVoskModel(voskModel.getName());
+                yamlData.setVoskModel(voskModel.getName());
 
-                FileUtils.saveEnvFile(envData);
+                FileUtils.saveYamlData(yamlData);
 
                 this.controller.loadSpeechRecognizerDataInBackground(voskModel.getName());
             } else {

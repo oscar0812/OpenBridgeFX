@@ -71,7 +71,7 @@ public class MainController {
 
     private final ChatService chatService = new ChatService();
     private TokenService tokenService;
-    private EnvData envData = new EnvData();
+    private YamlData yamlData = new YamlData();
 
     List<ChatData> chatHistory = new ArrayList<>();
 
@@ -193,27 +193,27 @@ public class MainController {
     }
 
     private void checkEnvFile() {
-        File envFile = new File(Constants.ENV_FILE_PATH);
+        File envFile = new File(Constants.PROJECT_YAML_FILE_PATH);
         if (!envFile.exists()) {
             showApiEnvDialog();
         }
 
         // file exists, but does it have all the required values?
-        envData = FileUtils.getEnvData();
+        yamlData = FileUtils.getYamlData();
 
-        if (!envData.hasValidApiData()) {
+        if (!yamlData.hasValidApiData()) {
             showApiEnvDialog();
         }
 
-        tokenService = new TokenService(ModelType.fromName(envData.getModel()).orElseThrow());
-        if(!Objects.isNull(envData.getVoskModel()) && !envData.getVoskModel().isEmpty()) {
-            loadSpeechRecognizerDataInBackground(envData.getVoskModel());
+        tokenService = new TokenService(ModelType.fromName(yamlData.getChatGptModel()).orElseThrow());
+        if(!Objects.isNull(yamlData.getVoskModel()) && !yamlData.getVoskModel().isEmpty()) {
+            loadSpeechRecognizerDataInBackground(yamlData.getVoskModel());
         }
     }
 
     @FXML
     public void showApiEnvDialog() {
-        ApiEnvFileDialog apiEnvFileDialog = new ApiEnvFileDialog(this, envData);
+        ApiEnvFileDialog apiEnvFileDialog = new ApiEnvFileDialog(this, yamlData);
         apiEnvFileDialog.showDialog(); // Show the dialog
     }
 
@@ -383,7 +383,7 @@ public class MainController {
         addMessageBubble(chatEntry, true);
 
         // Create and start the GPT API service
-        ApiService gptApiService = new ApiService(chatEntry.getFinalPrompt(), envData);
+        ApiService gptApiService = new ApiService(chatEntry.getFinalPrompt(), yamlData);
 
         gptApiService.setOnSucceeded(event -> {
             String gptResponse = gptApiService.getValue();

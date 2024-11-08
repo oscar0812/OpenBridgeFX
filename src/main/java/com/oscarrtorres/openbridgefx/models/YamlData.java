@@ -1,17 +1,20 @@
 package com.oscarrtorres.openbridgefx.models;
 
+import java.util.List;
 import java.util.Objects;
 
-public class EnvData {
+public class YamlData {
     private String apiKey;
     private String apiUrl;
-    private String model;
+    private String chatGptModel;
     private String voskModel;
 
-    public EnvData() {
+    private List<String> voskModelList;
+
+    public YamlData() {
         this.apiKey = null;
         this.apiUrl = null;
-        this.model = null;
+        this.chatGptModel = null;
         this.voskModel = null;
     }
 
@@ -31,18 +34,18 @@ public class EnvData {
         this.apiUrl = apiUrl;
     }
 
-    public String getModel() {
-        return model;
+    public String getChatGptModel() {
+        return chatGptModel;
     }
 
-    public void setModel(String model) {
-        this.model = model;
+    public void setChatGptModel(String chatGptModel) {
+        this.chatGptModel = chatGptModel;
     }
 
     public boolean hasValidApiData() {
         return !Objects.isNull(getApiUrl()) && !getApiUrl().isBlank() &&
                 !Objects.isNull(getApiKey()) && !getApiKey().isBlank() &&
-                !Objects.isNull(getModel()) && !getModel().isBlank();
+                !Objects.isNull(getChatGptModel()) && !getChatGptModel().isBlank();
     }
 
     public void setVoskModel(String voskModel) {
@@ -53,12 +56,20 @@ public class EnvData {
         return voskModel;
     }
 
+    public void setVoskModelList(List<String> voskModelList) {
+        this.voskModelList = voskModelList;
+    }
+
+    public List<String> getVoskModelList() {
+        return voskModelList;
+    }
+
     @Override
     public String toString() {
         return "EnvData{" +
                 "apiKey='" + apiKey + '\'' +
                 ", apiUrl='" + apiUrl + '\'' +
-                ", model='" + model + '\'' +
+                ", model='" + chatGptModel + '\'' +
                 ", voskModel='" + voskModel + '\'' +
                 '}';
     }

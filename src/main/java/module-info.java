@@ -10,7 +10,7 @@ module com.oscarrtorres.openbridgefx {
     requires org.kordamp.bootstrapfx.core;
     requires com.almasb.fxgl.all;
     requires org.json;
-    requires io.github.cdimascio.dotenv.java;
+    requires org.yaml.snakeyaml;
     requires jtokkit;
     requires org.commonmark;
     requires java.desktop;

@@ -1,12 +1,15 @@
 package com.oscarrtorres.openbridgefx.utils;
 
 import com.oscarrtorres.openbridgefx.models.Constants;
-import com.oscarrtorres.openbridgefx.models.EnvData;
-import io.github.cdimascio.dotenv.Dotenv;
+import com.oscarrtorres.openbridgefx.models.YamlData;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.inspector.TagInspector;
+import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.zip.ZipEntry;
@@ -14,31 +17,37 @@ import java.util.zip.ZipInputStream;
 
 public class FileUtils {
 
-    public static EnvData getEnvData() {
-        Dotenv dotenv = Dotenv.configure().directory(Constants.ENV_FILE_PATH).load();
-        String apiKey = dotenv.get("API_KEY");
-        String apiUrl = dotenv.get("API_URL");
-        String model = dotenv.get("MODEL");
-        String voskModel = dotenv.get("VOSK_MODEL");
+    public static YamlData getYamlData() {
+        // Configure LoaderOptions to allow the specific package or class
+        var loaderoptions = new LoaderOptions();
+        TagInspector taginspector =
+                tag -> tag.getClassName().equals(YamlData.class.getName());
+        loaderoptions.setTagInspector(taginspector);
+        Yaml yaml = new Yaml(new Constructor(YamlData.class, loaderoptions));
 
-        EnvData envData = new EnvData();
-        envData.setApiKey(apiKey);
-        envData.setApiUrl(apiUrl);
-        envData.setModel(model);
-        envData.setVoskModel(voskModel);
+        YamlData yamlData = new YamlData();
 
-        return envData;
+        try (InputStream inputStream = new FileInputStream(Constants.PROJECT_YAML_FILE_PATH)) {
+            yamlData = yaml.load(inputStream);
+            System.out.println(yamlData);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return yamlData;
     }
 
-    public static void saveEnvFile(EnvData envData) {
-        try (FileWriter writer = new FileWriter(Constants.ENV_FILE_PATH)) {
-            writer.write("API_KEY=" + envData.getApiKey() + "\n");
-            writer.write("API_URL=" + envData.getApiUrl() + "\n");
-            writer.write("MODEL=" + envData.getModel() + "\n");
-            writer.write("VOSK_MODEL=" + envData.getVoskModel() + "\n");
-            writer.flush();
+    public static void saveYamlData(YamlData yamlData) {
+        DumperOptions options = new DumperOptions();
+        options.setIndent(2);
+        options.setPrettyFlow(true);
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        Yaml yaml = new Yaml(options);
+
+        try (FileWriter writer = new FileWriter(Constants.PROJECT_YAML_FILE_PATH)) {
+            yaml.dump(yamlData, writer);
         } catch (IOException e) {
-            System.err.println("Error saving .env file: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

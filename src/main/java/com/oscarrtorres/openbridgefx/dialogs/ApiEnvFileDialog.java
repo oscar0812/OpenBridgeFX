@@ -2,7 +2,7 @@ package com.oscarrtorres.openbridgefx.dialogs;
 
 import com.knuddels.jtokkit.api.ModelType;
 import com.oscarrtorres.openbridgefx.MainController;
-import com.oscarrtorres.openbridgefx.models.EnvData;
+import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -14,16 +14,16 @@ import java.util.Optional;
 public class ApiEnvFileDialog {
 
     private final MainController controller; // Reference to the MainController
-    private final EnvData envData;
+    private final YamlData yamlData;
 
-    public ApiEnvFileDialog(MainController controller, EnvData envData) {
+    public ApiEnvFileDialog(MainController controller, YamlData yamlData) {
         this.controller = controller;
-        this.envData = envData;
+        this.yamlData = yamlData;
     }
 
     public void showDialog() {
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        String headerText = envData.hasValidApiData() ? "Update .env file" : "The .env file is missing!";
+        String headerText = yamlData.hasValidApiData() ? "Update .env file" : "The .env file is missing!";
         alert.setTitle("Configuration Missing");
         alert.setHeaderText(headerText);
         alert.setContentText("Please enter your configuration values.");
@@ -32,15 +32,15 @@ public class ApiEnvFileDialog {
         TextField apiKeyField = new TextField();
         apiKeyField.setPromptText("Enter API Key");
 
-        if(!Objects.isNull(envData.getApiKey())) {
-            apiKeyField.setText(envData.getApiKey());
+        if(!Objects.isNull(yamlData.getApiKey())) {
+            apiKeyField.setText(yamlData.getApiKey());
         }
 
         TextField apiUrlField = new TextField();
         apiUrlField.setPromptText("Enter API URL");
 
-        if(!Objects.isNull(envData.getApiUrl())) {
-            apiUrlField.setText(envData.getApiUrl());
+        if(!Objects.isNull(yamlData.getApiUrl())) {
+            apiUrlField.setText(yamlData.getApiUrl());
         }
 
         // Create a ComboBox for model selection
@@ -69,8 +69,8 @@ public class ApiEnvFileDialog {
                 errorLabel // Add the error label to the dialog
         );
 
-        if (!Objects.isNull(envData.getModel()) && modelComboBox.getItems().contains(envData.getModel())) {
-            modelComboBox.setValue(envData.getModel());
+        if (!Objects.isNull(yamlData.getChatGptModel()) && modelComboBox.getItems().contains(yamlData.getChatGptModel())) {
+            modelComboBox.setValue(yamlData.getChatGptModel());
         }
 
         alert.getDialogPane().setContent(dialogPaneContent);
@@ -96,15 +96,15 @@ public class ApiEnvFileDialog {
                     // Hide error message if input is valid
                     errorLabel.setVisible(false);
 
-                    envData.setApiKey(apiKey);
-                    envData.setApiUrl(apiUrl);
-                    envData.setModel(selectedModel);
-                    FileUtils.saveEnvFile(envData);
+                    yamlData.setApiKey(apiKey);
+                    yamlData.setApiUrl(apiUrl);
+                    yamlData.setChatGptModel(selectedModel);
+                    FileUtils.saveYamlData(yamlData);
                     break; // Break the loop if everything is valid
                 }
             } else {
                 // User clicked Cancel, exit the application
-                if(!envData.hasValidApiData()) {
+                if(!yamlData.hasValidApiData()) {
                     System.exit(0);
                 }
                 break;
