@@ -10,7 +10,8 @@ public class VoskModel {
         this.zipUrl = zipUrl;
         int lastSlashIndex = zipUrl.lastIndexOf('/');
         if (lastSlashIndex != -1 && lastSlashIndex < zipUrl.length() - 1) {
-            this.name = zipUrl.substring(lastSlashIndex + 1);
+            this.name = zipUrl.substring(lastSlashIndex + 1); // https://web.com/a.zip -> a.zip
+            this.name = this.name.substring(0, this.name.length() - 4); // a.zip -> a
         }
     }
 

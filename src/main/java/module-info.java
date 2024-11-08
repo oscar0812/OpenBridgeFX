@@ -19,4 +19,13 @@ module com.oscarrtorres.openbridgefx {
 
     opens com.oscarrtorres.openbridgefx to javafx.fxml;
     exports com.oscarrtorres.openbridgefx;
+
+    exports com.oscarrtorres.openbridgefx.dialogs;
+    opens com.oscarrtorres.openbridgefx.dialogs to javafx.fxml;
+    exports com.oscarrtorres.openbridgefx.models;
+    opens com.oscarrtorres.openbridgefx.models to javafx.fxml;
+    exports com.oscarrtorres.openbridgefx.services;
+    opens com.oscarrtorres.openbridgefx.services to javafx.fxml;
+    exports com.oscarrtorres.openbridgefx.utils;
+    opens com.oscarrtorres.openbridgefx.utils to javafx.fxml;
 }

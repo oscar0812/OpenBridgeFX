@@ -6,17 +6,13 @@ public class EnvData {
     private String apiKey;
     private String apiUrl;
     private String model;
+    private String voskModel;
 
     public EnvData() {
         this.apiKey = null;
         this.apiUrl = null;
         this.model = null;
-    }
-
-    public EnvData(String apiKey, String apiUrl, String model) {
-        this.apiKey = apiKey;
-        this.apiUrl = apiUrl;
-        this.model = model;
+        this.voskModel = null;
     }
 
     public String getApiKey() {
@@ -43,10 +39,18 @@ public class EnvData {
         this.model = model;
     }
 
-    public boolean isValid() {
+    public boolean hasValidApiData() {
         return !Objects.isNull(getApiUrl()) && !getApiUrl().isBlank() &&
                 !Objects.isNull(getApiKey()) && !getApiKey().isBlank() &&
                 !Objects.isNull(getModel()) && !getModel().isBlank();
+    }
+
+    public void setVoskModel(String voskModel) {
+        this.voskModel = voskModel;
+    }
+
+    public String getVoskModel() {
+        return voskModel;
     }
 
     @Override
@@ -55,6 +59,7 @@ public class EnvData {
                 "apiKey='" + apiKey + '\'' +
                 ", apiUrl='" + apiUrl + '\'' +
                 ", model='" + model + '\'' +
+                ", voskModel='" + voskModel + '\'' +
                 '}';
     }
 }

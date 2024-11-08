@@ -1,31 +1,31 @@
-package com.oscarrtorres.openbridgefx;
+package com.oscarrtorres.openbridgefx.dialogs;
 
 import com.knuddels.jtokkit.api.ModelType;
-import com.oscarrtorres.openbridgefx.models.Constants;
+import com.oscarrtorres.openbridgefx.MainController;
 import com.oscarrtorres.openbridgefx.models.EnvData;
+import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-public class EnvFileDialog {
+public class ApiEnvFileDialog {
 
     private final MainController controller; // Reference to the MainController
     private final EnvData envData;
 
-    public EnvFileDialog(MainController controller, EnvData envData) {
+    public ApiEnvFileDialog(MainController controller, EnvData envData) {
         this.controller = controller;
         this.envData = envData;
     }
 
     public void showDialog() {
         Alert alert = new Alert(Alert.AlertType.WARNING);
+        String headerText = envData.hasValidApiData() ? "Update .env file" : "The .env file is missing!";
         alert.setTitle("Configuration Missing");
-        alert.setHeaderText("The .env file is missing!");
+        alert.setHeaderText(headerText);
         alert.setContentText("Please enter your configuration values.");
 
         // Create fields for the required configuration
@@ -99,23 +99,16 @@ public class EnvFileDialog {
                     envData.setApiKey(apiKey);
                     envData.setApiUrl(apiUrl);
                     envData.setModel(selectedModel);
-                    saveEnvFile(envData);
+                    FileUtils.saveEnvFile(envData);
                     break; // Break the loop if everything is valid
                 }
             } else {
                 // User clicked Cancel, exit the application
-                System.exit(0);
+                if(!envData.hasValidApiData()) {
+                    System.exit(0);
+                }
+                break;
             }
-        }
-    }
-    private void saveEnvFile(EnvData envData) {
-        try (FileWriter writer = new FileWriter(Constants.ENV_FILE_PATH)) {
-            writer.write("API_KEY=" + envData.getApiKey() + "\n");
-            writer.write("API_URL=" + envData.getApiUrl() + "\n");
-            writer.write("MODEL=" + envData.getModel() + "\n");
-            writer.flush();
-        } catch (IOException e) {
-            controller.showErrorAlert("Error saving .env file: " + e.getMessage());
         }
     }
 }

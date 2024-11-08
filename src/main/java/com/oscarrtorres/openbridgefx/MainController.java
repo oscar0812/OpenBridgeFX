@@ -1,15 +1,16 @@
 package com.oscarrtorres.openbridgefx;
 
 import com.knuddels.jtokkit.api.ModelType;
+import com.oscarrtorres.openbridgefx.dialogs.ApiEnvFileDialog;
+import com.oscarrtorres.openbridgefx.dialogs.VoskModelDialog;
 import com.oscarrtorres.openbridgefx.models.*;
 import com.oscarrtorres.openbridgefx.services.*;
-import io.github.cdimascio.dotenv.Dotenv;
+import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import javafx.animation.PauseTransition;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -25,31 +26,24 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.vosk.Model;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class MainController {
+    @FXML
+    private SplitPane mainSplitPane;
 
     @FXML
     private VBox outputContainer;
@@ -77,7 +71,7 @@ public class MainController {
 
     private final ChatService chatService = new ChatService();
     private TokenService tokenService;
-    private final EnvData envData = new EnvData();
+    private EnvData envData = new EnvData();
 
     List<ChatData> chatHistory = new ArrayList<>();
 
@@ -97,8 +91,6 @@ public class MainController {
         parameterScrollPane.setManaged(false);
 
         setChatHistory();
-
-        loadSpeechRecognizerDataInBackground();
     }
 
     public void showInfoAlert(String message) {
@@ -109,13 +101,13 @@ public class MainController {
         alert.showAndWait();
     }
 
-    private void loadSpeechRecognizerDataInBackground() {
+    public void loadSpeechRecognizerDataInBackground(String voskModelName) {
         // Create a Task to load the SpeechRecognizerData in the background
         Task<SpeechRecognizerData> loadDataTask = new Task<SpeechRecognizerData>() {
             @Override
             protected SpeechRecognizerData call() throws Exception {
                 // Perform the model loading in the background thread
-                return new SpeechRecognizerData("models/vosk-model-small-en-us-0.152");
+                return new SpeechRecognizerData(Constants.MODELS_DIR_PATH + File.separator + voskModelName);
             }
 
             @Override
@@ -203,31 +195,30 @@ public class MainController {
     private void checkEnvFile() {
         File envFile = new File(Constants.ENV_FILE_PATH);
         if (!envFile.exists()) {
-            showEnvDialog();
+            showApiEnvDialog();
         }
 
         // file exists, but does it have all the required values?
-        Dotenv dotenv = Dotenv.load();
-        String apiKey = dotenv.get("API_KEY");
-        String apiUrl = dotenv.get("API_URL");
-        String model = dotenv.get("MODEL");
-        envData.setApiKey(apiKey);
-        envData.setApiUrl(apiUrl);
-        envData.setModel(model);
+        envData = FileUtils.getEnvData();
 
-        if (!envData.isValid()) {
-            showEnvDialog();
+        if (!envData.hasValidApiData()) {
+            showApiEnvDialog();
         }
 
         tokenService = new TokenService(ModelType.fromName(envData.getModel()).orElseThrow());
+        if(!Objects.isNull(envData.getVoskModel()) && !envData.getVoskModel().isEmpty()) {
+            loadSpeechRecognizerDataInBackground(envData.getVoskModel());
+        }
     }
 
-    private void showEnvDialog() {
-        EnvFileDialog envFileDialog = new EnvFileDialog(this, envData);
-        envFileDialog.showDialog(); // Show the dialog
+    @FXML
+    public void showApiEnvDialog() {
+        ApiEnvFileDialog apiEnvFileDialog = new ApiEnvFileDialog(this, envData);
+        apiEnvFileDialog.showDialog(); // Show the dialog
     }
 
-    private void showVoskModelDialog() {
+    @FXML
+    public void showVoskModelDialog() {
         VoskModelDialog voskModelDialog = new VoskModelDialog(this);
         voskModelDialog.showDialog();
     }
