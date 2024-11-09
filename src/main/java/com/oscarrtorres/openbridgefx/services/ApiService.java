@@ -27,16 +27,16 @@ public class ApiService extends Service<String> {
         return new Task<>() {
             @Override
             protected String call() throws Exception {
-                URL url = new URL(yamlData.getApiUrl());
+                URL url = new URL(yamlData.getChatGpt().getApiUrl());
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
-                connection.setRequestProperty("Authorization", "Bearer " + yamlData.getApiKey());
+                connection.setRequestProperty("Authorization", "Bearer " + yamlData.getChatGpt().getApiKey());
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
                 // Create a JSON object for the request
                 JSONObject requestBody = new JSONObject();
-                requestBody.put("model", yamlData.getChatGptModel());
+                requestBody.put("model", yamlData.getChatGpt().getModel());
 
                 // Create the messages array
                 JSONArray messages = new JSONArray();

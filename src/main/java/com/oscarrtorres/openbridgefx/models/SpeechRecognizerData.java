@@ -8,14 +8,17 @@ import java.io.IOException;
 
 public class SpeechRecognizerData {
     private String modelPath;
+    private String modelName;
     private Model model;
     private Recognizer recognizer;
 
     public SpeechRecognizerData(String modelPath) {
         this.modelPath = modelPath;
         try {
+            this.modelName = modelPath.substring(modelPath.lastIndexOf('/') + 1);
             this.model = new Model(modelPath);
-            this.recognizer = new Recognizer(model, 16000);;
+            this.recognizer = new Recognizer(model, 16000);
+            this.recognizer.setPartialWords(false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -27,6 +30,14 @@ public class SpeechRecognizerData {
 
     public void setModelPath(String modelPath) {
         this.modelPath = modelPath;
+    }
+
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
+    }
+
+    public String getModelName() {
+        return modelName;
     }
 
     public Model getModel() {

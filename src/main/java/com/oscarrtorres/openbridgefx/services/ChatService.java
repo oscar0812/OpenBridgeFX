@@ -53,7 +53,7 @@ public class ChatService {
     }
 
     public void saveChatData() {
-        String filePath = Constants.CHATS_DIR_PATH + this.currentChatData.getFileName();
+        String filePath = Constants.CHATS_DIR_PATH + File.separator + this.currentChatData.getFileName();
         JSONArray jsonArray = new JSONArray();
         ObservableList<ChatEntry> chatEntries = this.currentChatData.getChatEntries();
 

@@ -16,6 +16,7 @@ module com.oscarrtorres.openbridgefx {
     requires java.desktop;
     requires vosk;
     requires com.fasterxml.jackson.databind;
+    requires annotations;
 
     opens com.oscarrtorres.openbridgefx to javafx.fxml;
     exports com.oscarrtorres.openbridgefx;

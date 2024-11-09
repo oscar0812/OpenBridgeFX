@@ -18,19 +18,21 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class VoskModelDialog {
 
     private final MainController controller;
+    private final YamlData yamlData;
 
-    public VoskModelDialog(MainController controller) {
+    public VoskModelDialog(MainController controller, YamlData yamlData) {
         this.controller = controller;
+        this.yamlData = yamlData;
     }
 
     public void showDialog() {
-        YamlData yamlData = FileUtils.getYamlData();
-
         // Create an alert dialog with a custom content
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Available Vosk Models");
@@ -41,11 +43,7 @@ public class VoskModelDialog {
         modelList.setPadding(new Insets(15));
 
         // Sample models with download links
-        VoskModel[] models = new VoskModel[]{
-                new VoskModel("https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip"),
-                new VoskModel("https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip"),
-                new VoskModel("https://alphacephei.com/vosk/models/vosk-model-en-us-0.42-gigaspeech.zip")
-        };
+        List<VoskModel> models = yamlData.getVosk().getModelList().stream().map(VoskModel::new).toList();
 
         // Group for the radio buttons so that only one can be selected at a time
         ToggleGroup toggleGroup = new ToggleGroup();
@@ -71,7 +69,7 @@ public class VoskModelDialog {
             radioButton.setToggleGroup(toggleGroup);
             radioButton.setUserData(model);
 
-            if(modelExists && !Objects.isNull(yamlData.getVoskModel()) && yamlData.getVoskModel().equals(model.getName())) {
+            if(modelExists && !Objects.isNull(yamlData.getVosk().getModel()) && yamlData.getVosk().getModel().equals(model.getName())) {
                 radioButton.setSelected(true);
             }
 
@@ -165,7 +163,7 @@ public class VoskModelDialog {
                 VoskModel voskModel = (VoskModel) selectedButton.getUserData();
                 System.out.println("Selected model: " + voskModel.getName());
 
-                yamlData.setVoskModel(voskModel.getName());
+                yamlData.getVosk().setModel(voskModel.getName());
 
                 FileUtils.saveYamlData(yamlData);
 
@@ -177,7 +175,7 @@ public class VoskModelDialog {
 
         // Set the custom content of the alert dialog
         alert.getDialogPane().setContent(modelList);
-        alert.getDialogPane().setPrefSize(650, models.length * 60);
+        alert.getDialogPane().setPrefSize(650, models.size() * 60);
         alert.showAndWait();
     }
 }

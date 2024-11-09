@@ -6,74 +6,92 @@ import java.util.List;
 import java.util.Objects;
 
 public class YamlData {
-    private String apiKey;
-    private String apiUrl;
-    private String chatGptModel;
-    private String voskModel;
-
-    private List<String> voskModelList;
+    private ChatGptConfig chatGpt;
+    private VoskConfig vosk;
 
     public YamlData() {
-        this.apiKey = null;
-        this.apiUrl = "https://api.openai.com/v1/chat/completions";
-        this.chatGptModel = ModelType.GPT_4O_MINI.getName();
-        this.voskModel = null;
+        this.chatGpt = new ChatGptConfig();
+        this.vosk = new VoskConfig();
     }
 
-    public String getApiKey() {
-        return apiKey;
+    public ChatGptConfig getChatGpt() {
+        return chatGpt;
     }
 
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
+    public void setChatGpt(ChatGptConfig chatGpt) {
+        this.chatGpt = chatGpt;
     }
 
-    public String getApiUrl() {
-        return apiUrl;
+    public VoskConfig getVosk() {
+        return vosk;
     }
 
-    public void setApiUrl(String apiUrl) {
-        this.apiUrl = apiUrl;
+    public void setVosk(VoskConfig vosk) {
+        this.vosk = vosk;
     }
 
-    public String getChatGptModel() {
-        return chatGptModel;
+    public static class ChatGptConfig {
+        private String apiKey;
+        private String apiUrl = "https://api.openai.com/v1/chat/completions";
+        private String model = ModelType.GPT_4O_MINI.getName();
+
+        public boolean isValid() {
+            return !Objects.isNull(getApiUrl()) && !getApiUrl().isBlank() &&
+                    !Objects.isNull(getApiKey()) && !getApiKey().isBlank() &&
+                    !Objects.isNull(getModel()) && !getModel().isBlank();
+        }
+
+        public String getApiKey() {
+            return apiKey;
+        }
+
+        public void setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+        }
+
+        public String getApiUrl() {
+            return apiUrl;
+        }
+
+        public void setApiUrl(String apiUrl) {
+            this.apiUrl = apiUrl;
+        }
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String model) {
+            this.model = model;
+        }
     }
 
-    public void setChatGptModel(String chatGptModel) {
-        this.chatGptModel = chatGptModel;
-    }
+    public static class VoskConfig {
+        private String model;
+        private List<String> modelList;
 
-    public boolean hasValidApiData() {
-        return !Objects.isNull(getApiUrl()) && !getApiUrl().isBlank() &&
-                !Objects.isNull(getApiKey()) && !getApiKey().isBlank() &&
-                !Objects.isNull(getChatGptModel()) && !getChatGptModel().isBlank();
-    }
+        public String getModel() {
+            return model;
+        }
 
-    public void setVoskModel(String voskModel) {
-        this.voskModel = voskModel;
-    }
+        public void setModel(String model) {
+            this.model = model;
+        }
 
-    public String getVoskModel() {
-        return voskModel;
-    }
+        public List<String> getModelList() {
+            return modelList;
+        }
 
-    public void setVoskModelList(List<String> voskModelList) {
-        this.voskModelList = voskModelList;
-    }
-
-    public List<String> getVoskModelList() {
-        return voskModelList;
+        public void setModelList(List<String> modelList) {
+            this.modelList = modelList;
+        }
     }
 
     @Override
     public String toString() {
         return "YamlData{" +
-                "apiKey='" + apiKey + '\'' +
-                ", apiUrl='" + apiUrl + '\'' +
-                ", model='" + chatGptModel + '\'' +
-                ", voskModel='" + voskModel + '\'' +
+                "chatGpt=" + chatGpt +
+                ", vosk=" + vosk +
                 '}';
     }
 }
-

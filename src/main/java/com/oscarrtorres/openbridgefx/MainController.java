@@ -30,6 +30,7 @@ import javafx.stage.Window;
 import javafx.util.Duration;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
@@ -44,7 +45,6 @@ import java.util.regex.Pattern;
 public class MainController {
     @FXML
     private SplitPane mainSplitPane;
-
     @FXML
     private VBox outputContainer;
     @FXML
@@ -101,28 +101,26 @@ public class MainController {
         alert.showAndWait();
     }
 
-    public void loadSpeechRecognizerDataInBackground(String voskModelName) {
-        // Create a Task to load the SpeechRecognizerData in the background
-        Task<SpeechRecognizerData> loadDataTask = new Task<SpeechRecognizerData>() {
+    public void loadSpeechRecognizerDataInBackground(@NotNull String voskModelName) {
+        Task<SpeechRecognizerData> loadDataTask = new Task<>() {
             @Override
-            protected SpeechRecognizerData call() throws Exception {
+            protected SpeechRecognizerData call() {
                 // Perform the model loading in the background thread
+                if(!Objects.isNull(speechRecognizerData) && voskModelName.equals(speechRecognizerData.getModelName())) {
+                    System.out.println("Speech model was already loaded.");
+                    return speechRecognizerData;
+                }
                 return new SpeechRecognizerData(Constants.MODELS_DIR_PATH + File.separator + voskModelName);
             }
 
             @Override
             protected void succeeded() {
-                // Update the speechRecognizerData on success (running on the JavaFX Application Thread)
                 speechRecognizerData = getValue();
                 System.out.println("Speech model loaded successfully.");
-                // You can update the UI here if necessary
             }
 
             @Override
             protected void failed() {
-                // Show an error message if the task fails
-                Throwable exception = getException();
-                // showErrorAlert("Failed to load model: " + exception.getMessage());
                 showVoskModelDialog();
             }
         };
@@ -173,7 +171,7 @@ public class MainController {
         messageText.setFont(new Font("Arial", 14));
 
         // Create the charge text
-        String subInfoText = lastEntry.getTimestamp()+ " | " + chat.getTotalCharge();
+        String subInfoText = lastEntry.getTimestamp() + " | " + chat.getTotalCharge();
         Text subInfo = new Text(subInfoText);
         subInfo.setFont(new Font("Arial", 12));
         subInfo.setFill(Color.GRAY);
@@ -201,13 +199,22 @@ public class MainController {
         // file exists, but does it have all the required values?
         yamlData = FileUtils.getYamlData();
 
-        if (!yamlData.hasValidApiData()) {
+        if (!yamlData.getChatGpt().isValid()) {
             showApiYamlDialog();
         }
 
-        tokenService = new TokenService(ModelType.fromName(yamlData.getChatGptModel()).orElseThrow());
-        if(!Objects.isNull(yamlData.getVoskModel()) && !yamlData.getVoskModel().isEmpty()) {
-            loadSpeechRecognizerDataInBackground(yamlData.getVoskModel());
+        tokenService = new TokenService(ModelType.fromName(yamlData.getChatGpt().getModel()).orElseThrow());
+
+        if (Objects.isNull(yamlData.getVosk().getModelList()) || yamlData.getVosk().getModelList().isEmpty()) {
+            yamlData.getVosk().setModelList(Arrays.asList(
+                    "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip",
+                    "https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip",
+                    "https://alphacephei.com/vosk/models/vosk-model-en-us-0.42-gigaspeech.zip"));
+            FileUtils.saveYamlData(yamlData);
+        }
+
+        if (!Objects.isNull(yamlData.getVosk().getModel()) && !yamlData.getVosk().getModel().isEmpty()) {
+            loadSpeechRecognizerDataInBackground(yamlData.getVosk().getModel());
         }
     }
 
@@ -219,7 +226,7 @@ public class MainController {
 
     @FXML
     public void showVoskModelDialog() {
-        VoskModelDialog voskModelDialog = new VoskModelDialog(this);
+        VoskModelDialog voskModelDialog = new VoskModelDialog(this, yamlData);
         voskModelDialog.showDialog();
     }
 

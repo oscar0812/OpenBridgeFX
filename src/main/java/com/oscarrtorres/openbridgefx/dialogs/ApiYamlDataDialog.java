@@ -31,15 +31,15 @@ public class ApiYamlDataDialog {
         TextField apiKeyField = new TextField();
         apiKeyField.setPromptText("Enter API Key");
 
-        if(!Objects.isNull(yamlData.getApiKey())) {
-            apiKeyField.setText(yamlData.getApiKey());
+        if(!Objects.isNull(yamlData.getChatGpt().getApiKey())) {
+            apiKeyField.setText(yamlData.getChatGpt().getApiKey());
         }
 
         TextField apiUrlField = new TextField();
         apiUrlField.setPromptText("Enter API URL");
 
-        if(!Objects.isNull(yamlData.getApiUrl())) {
-            apiUrlField.setText(yamlData.getApiUrl());
+        if(!Objects.isNull(yamlData.getChatGpt().getApiUrl())) {
+            apiUrlField.setText(yamlData.getChatGpt().getApiUrl());
         }
 
         // Create a ComboBox for model selection
@@ -68,8 +68,8 @@ public class ApiYamlDataDialog {
                 errorLabel // Add the error label to the dialog
         );
 
-        if (!Objects.isNull(yamlData.getChatGptModel()) && modelComboBox.getItems().contains(yamlData.getChatGptModel())) {
-            modelComboBox.setValue(yamlData.getChatGptModel());
+        if (!Objects.isNull(yamlData.getChatGpt().getModel()) && modelComboBox.getItems().contains(yamlData.getChatGpt().getModel())) {
+            modelComboBox.setValue(yamlData.getChatGpt().getModel());
         }
 
         alert.getDialogPane().setContent(dialogPaneContent);
@@ -95,15 +95,15 @@ public class ApiYamlDataDialog {
                     // Hide error message if input is valid
                     errorLabel.setVisible(false);
 
-                    yamlData.setApiKey(apiKey);
-                    yamlData.setApiUrl(apiUrl);
-                    yamlData.setChatGptModel(selectedModel);
+                    yamlData.getChatGpt().setApiKey(apiKey);
+                    yamlData.getChatGpt().setApiUrl(apiUrl);
+                    yamlData.getChatGpt().setModel(selectedModel);
                     FileUtils.saveYamlData(yamlData);
                     break; // Break the loop if everything is valid
                 }
             } else {
                 // User clicked Cancel, exit the application
-                if(!yamlData.hasValidApiData()) {
+                if(!yamlData.getChatGpt().isValid()) {
                     System.exit(0);
                 }
                 break;
