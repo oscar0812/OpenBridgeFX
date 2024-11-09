@@ -1,5 +1,7 @@
 package com.oscarrtorres.openbridgefx.models;
 
+import com.knuddels.jtokkit.api.ModelType;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -13,8 +15,8 @@ public class YamlData {
 
     public YamlData() {
         this.apiKey = null;
-        this.apiUrl = null;
-        this.chatGptModel = null;
+        this.apiUrl = "https://api.openai.com/v1/chat/completions";
+        this.chatGptModel = ModelType.GPT_4O_MINI.getName();
         this.voskModel = null;
     }
 
@@ -66,7 +68,7 @@ public class YamlData {
 
     @Override
     public String toString() {
-        return "EnvData{" +
+        return "YamlData{" +
                 "apiKey='" + apiKey + '\'' +
                 ", apiUrl='" + apiUrl + '\'' +
                 ", model='" + chatGptModel + '\'' +

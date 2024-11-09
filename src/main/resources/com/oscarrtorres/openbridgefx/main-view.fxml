@@ -20,7 +20,7 @@
     <!-- Top Menu Bar -->
     <MenuBar>
         <Menu text="File">
-            <MenuItem text="API Values" onAction="#showApiEnvDialog"/>
+            <MenuItem text="API Values" onAction="#showApiYamlDialog"/>
             <MenuItem text="Vosk Models" onAction="#showVoskModelDialog"/>
         </Menu>
     </MenuBar>

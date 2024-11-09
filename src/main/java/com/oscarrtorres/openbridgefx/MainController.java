@@ -1,7 +1,7 @@
 package com.oscarrtorres.openbridgefx;
 
 import com.knuddels.jtokkit.api.ModelType;
-import com.oscarrtorres.openbridgefx.dialogs.ApiEnvFileDialog;
+import com.oscarrtorres.openbridgefx.dialogs.ApiYamlDataDialog;
 import com.oscarrtorres.openbridgefx.dialogs.VoskModelDialog;
 import com.oscarrtorres.openbridgefx.models.*;
 import com.oscarrtorres.openbridgefx.services.*;
@@ -77,7 +77,7 @@ public class MainController {
 
     @FXML
     public void initialize() throws IOException {
-        checkEnvFile();
+        validateYamlFile();
 
         promptTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
             updateParameters(newValue);
@@ -192,17 +192,17 @@ public class MainController {
         chatEntry.setOnMouseClicked(event -> onChatHistoryClick(chat));
     }
 
-    private void checkEnvFile() {
-        File envFile = new File(Constants.PROJECT_YAML_FILE_PATH);
-        if (!envFile.exists()) {
-            showApiEnvDialog();
+    private void validateYamlFile() {
+        File yamlFile = new File(Constants.PROJECT_YAML_FILE_PATH);
+        if (!yamlFile.exists()) {
+            showApiYamlDialog();
         }
 
         // file exists, but does it have all the required values?
         yamlData = FileUtils.getYamlData();
 
         if (!yamlData.hasValidApiData()) {
-            showApiEnvDialog();
+            showApiYamlDialog();
         }
 
         tokenService = new TokenService(ModelType.fromName(yamlData.getChatGptModel()).orElseThrow());
@@ -212,9 +212,9 @@ public class MainController {
     }
 
     @FXML
-    public void showApiEnvDialog() {
-        ApiEnvFileDialog apiEnvFileDialog = new ApiEnvFileDialog(this, yamlData);
-        apiEnvFileDialog.showDialog(); // Show the dialog
+    public void showApiYamlDialog() {
+        ApiYamlDataDialog apiYamlDataDialog = new ApiYamlDataDialog(this, yamlData);
+        apiYamlDataDialog.showDialog(); // Show the dialog
     }
 
     @FXML

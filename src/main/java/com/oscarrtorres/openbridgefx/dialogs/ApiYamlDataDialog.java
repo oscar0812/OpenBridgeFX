@@ -11,21 +11,20 @@ import javafx.scene.paint.Color;
 import java.util.Objects;
 import java.util.Optional;
 
-public class ApiEnvFileDialog {
+public class ApiYamlDataDialog {
 
     private final MainController controller; // Reference to the MainController
     private final YamlData yamlData;
 
-    public ApiEnvFileDialog(MainController controller, YamlData yamlData) {
+    public ApiYamlDataDialog(MainController controller, YamlData yamlData) {
         this.controller = controller;
         this.yamlData = yamlData;
     }
 
     public void showDialog() {
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        String headerText = yamlData.hasValidApiData() ? "Update .env file" : "The .env file is missing!";
         alert.setTitle("Configuration Missing");
-        alert.setHeaderText(headerText);
+        alert.setHeaderText("Update yaml file");
         alert.setContentText("Please enter your configuration values.");
 
         // Create fields for the required configuration
