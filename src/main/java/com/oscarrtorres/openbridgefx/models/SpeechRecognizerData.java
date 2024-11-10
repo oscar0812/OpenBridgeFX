@@ -11,14 +11,20 @@ public class SpeechRecognizerData {
     private String modelName;
     private Model model;
     private Recognizer recognizer;
+    private boolean isLoaded;
 
     public SpeechRecognizerData(String modelPath) {
         this.modelPath = modelPath;
+        this.modelName = modelPath.substring(modelPath.lastIndexOf('/') + 1);
+        this.isLoaded = false;
+    }
+
+    public void loadModel() {
         try {
-            this.modelName = modelPath.substring(modelPath.lastIndexOf('/') + 1);
             this.model = new Model(modelPath);
             this.recognizer = new Recognizer(model, 16000);
             this.recognizer.setPartialWords(false);
+            this.isLoaded = true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -54,5 +60,9 @@ public class SpeechRecognizerData {
 
     public void setRecognizer(Recognizer recognizer) {
         this.recognizer = recognizer;
+    }
+
+    public boolean isLoaded() {
+        return isLoaded;
     }
 }

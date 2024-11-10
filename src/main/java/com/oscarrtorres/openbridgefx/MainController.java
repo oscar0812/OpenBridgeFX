@@ -110,12 +110,13 @@ public class MainController {
                     System.out.println("Speech model was already loaded.");
                     return speechRecognizerData;
                 }
-                return new SpeechRecognizerData(Constants.MODELS_DIR_PATH + File.separator + voskModelName);
+                speechRecognizerData = new SpeechRecognizerData(Constants.MODELS_DIR_PATH + File.separator + voskModelName);
+                speechRecognizerData.loadModel();
+                return null;
             }
 
             @Override
             protected void succeeded() {
-                speechRecognizerData = getValue();
                 System.out.println("Speech model loaded successfully.");
             }
 
@@ -320,10 +321,14 @@ public class MainController {
         button1.setOnAction(event -> {
             if (isRecording) {
                 stopRecording();
-                button1.setText("Start Recording");
+                if(!isRecording) {
+                    button1.setText("Start Recording");
+                }
             } else {
                 startRecording(valueField);
-                button1.setText("Stop Recording");
+                if(isRecording) {
+                    button1.setText("Stop Recording");
+                }
             }
         });
 
@@ -334,22 +339,31 @@ public class MainController {
 
 
     private void startRecording(TextField valueField) {
+        if(Objects.isNull(speechRecognizerData)) {
+            showVoskModelDialog();
+            return;
+        } else if(!speechRecognizerData.isLoaded()){
+            Window stage = outputScrollPane.getScene().getWindow();
+            Toast.makeText(stage, "The Vosk Model is still loading...");
+            return;
+        }
+
         try {
             speechRecognizerThread = new SpeechRecognizerThread(valueField, speechRecognizerData);
+            isRecording = true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         speechThread = new Thread(speechRecognizerThread);
         speechThread.start();
-        isRecording = true;
     }
 
     private void stopRecording() {
         if (speechRecognizerThread != null) {
             speechRecognizerThread.stop();
             speechThread.interrupt();
-            isRecording = false;
         }
+        isRecording = false;
     }
 
 
