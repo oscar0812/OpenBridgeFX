@@ -1,22 +1,20 @@
 package com.oscarrtorres.openbridgefx.models;
 
-import com.oscarrtorres.openbridgefx.services.SpeechRecognizerThread;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class SpeechRecognizerData {
     private String modelPath;
     private String modelName;
     private Model model;
     private Recognizer recognizer;
-    private boolean isLoaded;
 
     public SpeechRecognizerData(String modelPath) {
         this.modelPath = modelPath;
         this.modelName = modelPath.substring(modelPath.lastIndexOf('/') + 1);
-        this.isLoaded = false;
     }
 
     public void loadModel() {
@@ -24,7 +22,6 @@ public class SpeechRecognizerData {
             this.model = new Model(modelPath);
             this.recognizer = new Recognizer(model, 16000);
             this.recognizer.setPartialWords(false);
-            this.isLoaded = true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -63,6 +60,6 @@ public class SpeechRecognizerData {
     }
 
     public boolean isLoaded() {
-        return isLoaded;
+        return !Objects.isNull(this.getModel());
     }
 }

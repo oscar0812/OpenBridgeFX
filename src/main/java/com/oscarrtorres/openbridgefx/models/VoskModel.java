@@ -1,7 +1,5 @@
 package com.oscarrtorres.openbridgefx.models;
 
-import java.nio.file.Paths;
-
 public class VoskModel {
     private final String zipUrl;
     private String name;

@@ -3,14 +3,13 @@ package com.oscarrtorres.openbridgefx.services;
 import com.oscarrtorres.openbridgefx.models.YamlData;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 public class ApiService extends Service<String> {
 

@@ -11,13 +11,13 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -33,12 +33,15 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,6 +96,55 @@ public class MainController {
         setChatHistory();
     }
 
+    public void fetchVoskModelListInBackground(YamlData yamlData) {
+        Task<List<String>> loadDataTask = new Task<>() {
+            @Override
+            protected List<String> call() {
+                String urlString = "https://alphacephei.com/vosk/models"; // Replace with your target URL
+                ArrayList<String> zipLinks = new ArrayList<>();
+
+                try {
+                    // Open a connection to the URL and create a BufferedReader to read the content
+                    URL url = new URL(urlString);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+
+                    String line;
+                    // Regex pattern to match hrefs that end with .zip
+                    Pattern pattern = Pattern.compile("href=[\"']([^\"'>]+\\.zip)[\"']");
+
+                    while ((line = reader.readLine()) != null) {
+                        Matcher matcher = pattern.matcher(line);
+                        while (matcher.find()) {
+                            // Print each href that ends with .zip
+                            zipLinks.add(matcher.group(1));
+                        }
+                    }
+
+                    reader.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return zipLinks;
+            }
+
+            @Override
+            protected void succeeded() {
+                List<String> zipLinks = getValue();
+                yamlData.getVosk().setModelList(zipLinks);
+                FileUtils.saveYamlData(yamlData);
+                System.out.println("Speech model list fetched successfully.");
+            }
+
+            @Override
+            protected void failed() {
+                showVoskModelDialog();
+            }
+        };
+
+        // Run the task in the background
+        new Thread(loadDataTask).start();
+    }
+
     public void showInfoAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Information");
@@ -106,7 +158,7 @@ public class MainController {
             @Override
             protected SpeechRecognizerData call() {
                 // Perform the model loading in the background thread
-                if(!Objects.isNull(speechRecognizerData) && voskModelName.equals(speechRecognizerData.getModelName())) {
+                if (!Objects.isNull(speechRecognizerData) && voskModelName.equals(speechRecognizerData.getModelName())) {
                     System.out.println("Speech model was already loaded.");
                     return speechRecognizerData;
                 }
@@ -207,14 +259,8 @@ public class MainController {
         tokenService = new TokenService(ModelType.fromName(yamlData.getChatGpt().getModel()).orElseThrow());
 
         if (Objects.isNull(yamlData.getVosk().getModelList()) || yamlData.getVosk().getModelList().isEmpty()) {
-            yamlData.getVosk().setModelList(Arrays.asList(
-                    "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip",
-                    "https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip",
-                    "https://alphacephei.com/vosk/models/vosk-model-en-us-0.42-gigaspeech.zip"));
-            FileUtils.saveYamlData(yamlData);
-        }
-
-        if (!Objects.isNull(yamlData.getVosk().getModel()) && !yamlData.getVosk().getModel().isEmpty()) {
+            fetchVoskModelListInBackground(yamlData);
+        } else if (!Objects.isNull(yamlData.getVosk().getModel()) && !yamlData.getVosk().getModel().isEmpty()) {
             loadSpeechRecognizerDataInBackground(yamlData.getVosk().getModel());
         }
     }
@@ -321,12 +367,12 @@ public class MainController {
         button1.setOnAction(event -> {
             if (isRecording) {
                 stopRecording();
-                if(!isRecording) {
+                if (!isRecording) {
                     button1.setText("Start Recording");
                 }
             } else {
                 startRecording(valueField);
-                if(isRecording) {
+                if (isRecording) {
                     button1.setText("Stop Recording");
                 }
             }
@@ -339,10 +385,10 @@ public class MainController {
 
 
     private void startRecording(TextField valueField) {
-        if(Objects.isNull(speechRecognizerData)) {
+        if (Objects.isNull(speechRecognizerData)) {
             showVoskModelDialog();
             return;
-        } else if(!speechRecognizerData.isLoaded()){
+        } else if (!speechRecognizerData.isLoaded()) {
             Window stage = outputScrollPane.getScene().getWindow();
             Toast.makeText(stage, "The Vosk Model is still loading...");
             return;

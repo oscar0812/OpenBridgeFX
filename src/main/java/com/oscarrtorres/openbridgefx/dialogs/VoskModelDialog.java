@@ -2,8 +2,8 @@ package com.oscarrtorres.openbridgefx.dialogs;
 
 import com.oscarrtorres.openbridgefx.MainController;
 import com.oscarrtorres.openbridgefx.models.Constants;
-import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.models.VoskModel;
+import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class VoskModelDialog {
 
@@ -35,7 +34,7 @@ public class VoskModelDialog {
     public void showDialog() {
         // Create an alert dialog with a custom content
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Available Vosk Models");
+        alert.setTitle("Download Vosk Models");
         alert.setHeaderText(null);
 
         // Create a VBox to hold the model information
@@ -69,7 +68,7 @@ public class VoskModelDialog {
             radioButton.setToggleGroup(toggleGroup);
             radioButton.setUserData(model);
 
-            if(modelExists && !Objects.isNull(yamlData.getVosk().getModel()) && yamlData.getVosk().getModel().equals(model.getName())) {
+            if (modelExists && !Objects.isNull(yamlData.getVosk().getModel()) && yamlData.getVosk().getModel().equals(model.getName())) {
                 radioButton.setSelected(true);
             }
 
@@ -156,6 +155,17 @@ public class VoskModelDialog {
             modelList.getChildren().add(modelRow);
         }
 
+        // Wrap the modelList VBox in a ScrollPane for vertical scrolling only
+        ScrollPane scrollPane = new ScrollPane(modelList);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // Disable horizontal scrolling
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED); // Enable vertical scrolling as needed
+        scrollPane.setPrefHeight(400); // Set a preferred height for scrolling
+
+        // Set the content of the alert to the ScrollPane
+        alert.getDialogPane().setContent(scrollPane);
+        alert.getDialogPane().setPrefSize(950, 450); // Adjust as needed
+
         // Set the OK button action
         okButton.setOnAction(event -> {
             RadioButton selectedButton = (RadioButton) toggleGroup.getSelectedToggle();
@@ -173,9 +183,6 @@ public class VoskModelDialog {
             }
         });
 
-        // Set the custom content of the alert dialog
-        alert.getDialogPane().setContent(modelList);
-        alert.getDialogPane().setPrefSize(650, models.size() * 60);
         alert.showAndWait();
     }
 }

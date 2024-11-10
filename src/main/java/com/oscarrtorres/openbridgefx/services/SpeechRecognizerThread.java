@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oscarrtorres.openbridgefx.models.SpeechRecognizerData;
 import javafx.application.Platform;
 import javafx.scene.control.TextField;
-import org.vosk.Model;
-import org.vosk.Recognizer;
 
 import javax.sound.sampled.*;
 import java.io.IOException;

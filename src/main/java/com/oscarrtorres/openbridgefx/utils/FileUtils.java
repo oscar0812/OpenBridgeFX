@@ -7,7 +7,6 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.inspector.TagInspector;
-import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
 import java.nio.file.*;
