@@ -10,13 +10,13 @@ import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TokenService {
+public class AITokenService {
     private final Map<ModelType, ModelPricing> modelPricingMap = new HashMap<>();
     private ModelType modelType;
     EncodingRegistry registry = Encodings.newDefaultEncodingRegistry();
     Encoding encoding;
 
-    public TokenService(ModelType modelType) {
+    public AITokenService(ModelType modelType) {
         // Initialize model pricing data
         modelPricingMap.put(ModelType.GPT_4O_MINI, new ModelPricing(ModelType.GPT_4O_MINI, 0.15, 0.60));
 

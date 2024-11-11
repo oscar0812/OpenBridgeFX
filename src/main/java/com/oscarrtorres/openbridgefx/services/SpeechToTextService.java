@@ -26,7 +26,7 @@ import java.util.Objects;
 public class SpeechToTextService {
     private MainController controller;
     private SpeechToTextData speechToTextData;
-    private SpeechToTextThread speechToTextThread;
+    private SpeechToTextRecordingThread speechToTextRecordingThread;
     private Thread speechThread;
     private boolean isRecording;
 
@@ -66,18 +66,18 @@ public class SpeechToTextService {
         }
 
         try {
-            speechToTextThread = new SpeechToTextThread(valueField, speechToTextData);
+            speechToTextRecordingThread = new SpeechToTextRecordingThread(valueField, speechToTextData);
             isRecording = true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        speechThread = new Thread(speechToTextThread);
+        speechThread = new Thread(speechToTextRecordingThread);
         speechThread.start();
     }
 
     public void stopRecording() {
-        if (speechToTextThread != null) {
-            speechToTextThread.stop();
+        if (speechToTextRecordingThread != null) {
+            speechToTextRecordingThread.stop();
             speechThread.interrupt();
         }
         isRecording = false;

@@ -9,7 +9,7 @@ import javax.sound.sampled.*;
 import java.io.IOException;
 import java.util.Map;
 
-public class SpeechToTextThread implements Runnable {
+public class SpeechToTextRecordingThread implements Runnable {
 
     private final TextField valueField;
     private final SpeechToTextData data;
@@ -17,7 +17,7 @@ public class SpeechToTextThread implements Runnable {
     private volatile boolean running = true;
     private final ObjectMapper objectMapper = new ObjectMapper(); // For JSON parsing
 
-    public SpeechToTextThread(TextField valueField, SpeechToTextData data) throws IOException {
+    public SpeechToTextRecordingThread(TextField valueField, SpeechToTextData data) throws IOException {
         this.valueField = valueField;
         this.data = data;
     }

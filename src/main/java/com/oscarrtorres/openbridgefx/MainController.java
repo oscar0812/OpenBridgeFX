@@ -6,7 +6,7 @@ import com.oscarrtorres.openbridgefx.models.*;
 import com.oscarrtorres.openbridgefx.services.AIRequestService;
 import com.oscarrtorres.openbridgefx.services.ChatService;
 import com.oscarrtorres.openbridgefx.services.SpeechToTextService;
-import com.oscarrtorres.openbridgefx.services.TokenService;
+import com.oscarrtorres.openbridgefx.services.AITokenService;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import com.oscarrtorres.openbridgefx.utils.Toast;
 import javafx.animation.PauseTransition;
@@ -35,6 +35,7 @@ import javafx.stage.Window;
 import javafx.util.Duration;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
@@ -73,7 +74,7 @@ public class MainController {
     private final ChatService chatService = new ChatService();
     private final SpeechToTextService speechToTextService = new SpeechToTextService();
 
-    private TokenService tokenService;
+    private AITokenService aiTokenService;
     private YamlData yamlData = new YamlData();
 
     List<ChatData> chatHistory = new ArrayList<>();
@@ -196,7 +197,7 @@ public class MainController {
             showApiPropertiesDialog();
         }
 
-        tokenService = new TokenService(ModelType.fromName(yamlData.getChatGpt().getModel()).orElseThrow());
+        aiTokenService = new AITokenService(ModelType.fromName(yamlData.getChatGpt().getModel()).orElseThrow());
 
         if (Objects.isNull(yamlData.getVosk().getModelList()) || yamlData.getVosk().getModelList().isEmpty()) {
             speechToTextService.fetchVoskModelList(yamlData);
@@ -235,22 +236,7 @@ public class MainController {
     }
 
     private void updateParameters(String prompt) {
-        Map<String, String> currentParameters = new HashMap<>();
-
-        // Collect current parameters from the UI
-        for (var node : parameterContainer.getChildren()) {
-            if (node instanceof HBox parameterSet) {
-                TextField keyField = (TextField) parameterSet.getChildren().get(1);
-                TextField valueField = (TextField) parameterSet.getChildren().get(3);
-
-                String key = keyField.getText().trim();
-                String value = valueField.getText().trim();
-
-                if (!key.isEmpty()) {
-                    currentParameters.put(key, value);
-                }
-            }
-        }
+        Map<String, String> currentParameters = getCurrentParameters();
 
         // Clear existing parameter fields in the UI
         parameterContainer.getChildren().clear();
@@ -285,6 +271,26 @@ public class MainController {
         }
     }
 
+    private @NotNull Map<String, String> getCurrentParameters() {
+        Map<String, String> currentParameters = new HashMap<>();
+
+        // Collect current parameters from the UI
+        for (var node : parameterContainer.getChildren()) {
+            if (node instanceof HBox parameterSet) {
+                TextField keyField = (TextField) parameterSet.getChildren().get(1);
+                TextField valueField = (TextField) parameterSet.getChildren().get(3);
+
+                String key = keyField.getText().trim();
+                String value = valueField.getText().trim();
+
+                if (!key.isEmpty()) {
+                    currentParameters.put(key, value);
+                }
+            }
+        }
+        return currentParameters;
+    }
+
     @FXML
     public void addParameterField(String key) {
         addParameterField(key, "");
@@ -302,24 +308,29 @@ public class MainController {
         valueField.setPromptText("Enter your param value here...");
 
         // Button to start/stop recording
-        Button button1 = new Button("Start Recording");
-        button1.setOnAction(event -> {
+        Button recordingButton = getRecordingButton(valueField);
+
+        HBox.setHgrow(valueField, Priority.ALWAYS);
+        parameterSet.getChildren().addAll(keyLabel, keyField, valueLabel, valueField, recordingButton);
+        parameterContainer.getChildren().add(parameterSet);
+    }
+
+    private @NotNull Button getRecordingButton(TextField valueField) {
+        Button button = new Button("Start Recording");
+        button.setOnAction(event -> {
             if (speechToTextService.isRecording()) {
                 speechToTextService.stopRecording();
                 if (!speechToTextService.isRecording()) {
-                    button1.setText("Start Recording");
+                    button.setText("Start Recording");
                 }
             } else {
                 speechToTextService.startRecording(valueField);
                 if (speechToTextService.isRecording()) {
-                    button1.setText("Stop Recording");
+                    button.setText("Stop Recording");
                 }
             }
         });
-
-        HBox.setHgrow(valueField, Priority.ALWAYS);
-        parameterSet.getChildren().addAll(keyLabel, keyField, valueLabel, valueField, button1);
-        parameterContainer.getChildren().add(parameterSet);
+        return button;
     }
 
 
@@ -329,22 +340,7 @@ public class MainController {
         chatEntry.setTimestamp(chatService.getCurrentTimestamp());
 
         chatEntry.setRawPrompt(promptTextArea.getText());
-        Map<String, String> parameters = new HashMap<>();
-
-        // Collect parameter key-value pairs from the parameter container
-        for (var node : parameterContainer.getChildren()) {
-            if (node instanceof HBox parameterSet) {
-                TextField keyField = (TextField) parameterSet.getChildren().get(1);
-                TextField valueField = (TextField) parameterSet.getChildren().get(3);
-
-                String key = keyField.getText().trim();
-                String value = valueField.getText().trim();
-
-                if (!key.isEmpty()) {
-                    parameters.put(key, value);
-                }
-            }
-        }
+        Map<String, String> parameters = getCurrentParameters();
         chatEntry.setParameters(parameters);
 
         // Replace placeholders in prompt with parameter values
@@ -355,17 +351,22 @@ public class MainController {
         }
 
         chatEntry.setFinalPrompt(parsedPrompt);
-        chatEntry.setPromptInfo(tokenService.getPromptInfo(parsedPrompt));
+        chatEntry.setPromptInfo(aiTokenService.getPromptInfo(parsedPrompt));
 
         addMessageBubble(chatEntry, true);
 
         // Create and start the GPT API service
+        AIRequestService gptAIRequestService = getAiRequestService(chatEntry);
+        gptAIRequestService.start(); // Start the service
+    }
+
+    private @NotNull AIRequestService getAiRequestService(ChatEntry chatEntry) {
         AIRequestService gptAIRequestService = new AIRequestService(chatEntry.getFinalPrompt(), yamlData);
 
         gptAIRequestService.setOnSucceeded(event -> {
             String gptResponse = gptAIRequestService.getValue();
             chatEntry.setResponse(gptResponse);
-            chatEntry.setResponseInfo(tokenService.getResponseInfo(gptResponse));
+            chatEntry.setResponseInfo(aiTokenService.getResponseInfo(gptResponse));
 
             addMessageBubble(chatEntry, false); // Add GPT response as received message
 
@@ -380,8 +381,7 @@ public class MainController {
             chatEntry.setResponse("Error: " + exception.getMessage());
             addMessageBubble(chatEntry, false); // Handle error
         });
-
-        gptAIRequestService.start(); // Start the service
+        return gptAIRequestService;
     }
 
     private void addMessageBubble(ChatEntry entry, boolean isSent) {
@@ -478,15 +478,7 @@ public class MainController {
         bubbleContainer.getChildren().removeIf(node -> node instanceof TextFlow);
 
         // Create a StackPane to hold the WebView with the bubble's styling
-        StackPane webViewContainer = new StackPane();
-        webViewContainer.setMaxWidth(500); // Match the original width
-        webViewContainer.setPadding(new Insets(10));
-
-        // Apply bubble styling
-        String bubbleStyle = isSent
-                ? "-fx-background-color: lightblue; -fx-background-radius: 15; -fx-padding: 10;"
-                : "-fx-background-color: lightgreen; -fx-background-radius: 15; -fx-padding: 10;";
-        webViewContainer.setStyle(bubbleStyle);
+        StackPane webViewContainer = getBubbleWebViewContainer(isSent);
 
         // Create a WebView and load the HTML content
         WebView webView = new WebView();
@@ -498,6 +490,19 @@ public class MainController {
 
         // Add the styled WebView container to the bubble container
         bubbleContainer.getChildren().add(1, webViewContainer);  // Add in place of the TextFlow
+    }
+
+    private static @NotNull StackPane getBubbleWebViewContainer(boolean isSent) {
+        StackPane webViewContainer = new StackPane();
+        webViewContainer.setMaxWidth(500); // Match the original width
+        webViewContainer.setPadding(new Insets(10));
+
+        // Apply bubble styling
+        String bubbleStyle = isSent
+                ? "-fx-background-color: lightblue; -fx-background-radius: 15; -fx-padding: 10;"
+                : "-fx-background-color: lightgreen; -fx-background-radius: 15; -fx-padding: 10;";
+        webViewContainer.setStyle(bubbleStyle);
+        return webViewContainer;
     }
 
     // Sample method for the second option

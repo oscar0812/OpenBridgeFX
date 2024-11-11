@@ -86,11 +86,10 @@ public class AIRequestService extends Service<String> {
         JSONArray choices = jsonObject.getJSONArray("choices");
 
         // Extract the content from the first choice
-        String messageContent = choices.getJSONObject(0)
+
+        return choices.getJSONObject(0)
                 .getJSONObject("message")
                 .getString("content");
-
-        return messageContent; // Return the extracted content
     }
 
 }
