@@ -164,7 +164,7 @@ public class MainController {
         messageText.setFont(new Font("Arial", 14));
 
         // Create the charge text
-        String subInfoText = lastEntry.getTimestamp() + " | " + chat.getTotalCharge();
+        String subInfoText = String.format("%s | $%.8f", lastEntry.getTimestamp(), chat.getTotalCharge());
         Text subInfo = new Text(subInfoText);
         subInfo.setFont(new Font("Arial", 12));
         subInfo.setFill(Color.GRAY);
