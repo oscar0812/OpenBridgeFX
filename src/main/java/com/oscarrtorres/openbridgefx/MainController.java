@@ -1,7 +1,7 @@
 package com.oscarrtorres.openbridgefx;
 
 import com.knuddels.jtokkit.api.ModelType;
-import com.oscarrtorres.openbridgefx.dialogs.ApiYamlDataDialog;
+import com.oscarrtorres.openbridgefx.dialogs.ApiPropertiesDialog;
 import com.oscarrtorres.openbridgefx.models.*;
 import com.oscarrtorres.openbridgefx.services.ApiService;
 import com.oscarrtorres.openbridgefx.services.ChatService;
@@ -186,14 +186,14 @@ public class MainController {
     private void validateYamlFile() {
         File yamlFile = new File(Constants.PROJECT_YAML_FILE_PATH);
         if (!yamlFile.exists()) {
-            showApiYamlDialog();
+            showApiPropertiesDialog();
         }
 
         // file exists, but does it have all the required values?
         yamlData = FileUtils.getYamlData();
 
         if (!yamlData.getChatGpt().isValid()) {
-            showApiYamlDialog();
+            showApiPropertiesDialog();
         }
 
         tokenService = new TokenService(ModelType.fromName(yamlData.getChatGpt().getModel()).orElseThrow());
@@ -206,9 +206,9 @@ public class MainController {
     }
 
     @FXML
-    public void showApiYamlDialog() {
-        ApiYamlDataDialog apiYamlDataDialog = new ApiYamlDataDialog(this, yamlData);
-        apiYamlDataDialog.showDialog(); // Show the dialog
+    public void showApiPropertiesDialog() {
+        ApiPropertiesDialog apiPropertiesDialog = new ApiPropertiesDialog(this, yamlData);
+        apiPropertiesDialog.showDialog();
     }
 
     @FXML

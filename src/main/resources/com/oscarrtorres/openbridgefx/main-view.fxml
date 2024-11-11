@@ -9,7 +9,7 @@
     <!-- Top Menu Bar -->
     <MenuBar>
         <Menu text="File">
-            <MenuItem fx:id="apiValuesMenuItem" text="API Values" onAction="#showApiYamlDialog"/>
+            <MenuItem fx:id="apiValuesMenuItem" text="API Values" onAction="#showApiPropertiesDialog"/>
             <MenuItem fx:id="voskModelsMenuItem" text="Vosk Models" onAction="#showVoskModelDialog"/>
         </Menu>
     </MenuBar>

@@ -11,21 +11,21 @@ import javafx.scene.paint.Color;
 import java.util.Objects;
 import java.util.Optional;
 
-public class ApiYamlDataDialog {
+public class ApiPropertiesDialog {
 
     private final MainController controller; // Reference to the MainController
     private final YamlData yamlData;
 
-    public ApiYamlDataDialog(MainController controller, YamlData yamlData) {
+    public ApiPropertiesDialog(MainController controller, YamlData yamlData) {
         this.controller = controller;
         this.yamlData = yamlData;
     }
 
     public void showDialog() {
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Configuration Missing");
-        alert.setHeaderText("Update yaml file");
-        alert.setContentText("Please enter your configuration values.");
+        alert.setTitle("API Properties");
+        alert.setHeaderText("Update connection properties");
+        alert.setContentText("Please enter your values");
 
         // Create fields for the required configuration
         TextField apiKeyField = new TextField();
