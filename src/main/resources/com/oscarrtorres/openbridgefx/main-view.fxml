@@ -9,8 +9,8 @@
     <!-- Top Menu Bar -->
     <MenuBar>
         <Menu text="File">
-            <MenuItem text="API Values" onAction="#showApiYamlDialog"/>
-            <MenuItem text="Vosk Models" onAction="#showVoskModelDialog"/>
+            <MenuItem fx:id="apiValuesMenuItem" text="API Values" onAction="#showApiYamlDialog"/>
+            <MenuItem fx:id="voskModelsMenuItem" text="Vosk Models" onAction="#showVoskModelDialog"/>
         </Menu>
     </MenuBar>
 

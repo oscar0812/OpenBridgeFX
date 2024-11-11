@@ -20,6 +20,9 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -57,9 +60,12 @@ public class MainController {
     private VBox parameterContainer;
     @FXML
     private ScrollPane parameterScrollPane;
-
     @FXML
     private VBox historyContainer;
+    @FXML
+    private MenuItem apiValuesMenuItem;
+    @FXML
+    private MenuItem voskModelsMenuItem;
 
     private static final double PARAMETER_HEIGHT = 200.0;
     private static final double MAX_SCROLLPANE_HEIGHT = 900.0;
@@ -74,6 +80,7 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        setKeyboardShortcuts();
         validateYamlFile();
 
         promptTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -89,6 +96,14 @@ public class MainController {
 
         setChatHistory();
         speechToTextService.setController(this);
+    }
+
+    private void setKeyboardShortcuts() {
+        // Set the accelerator for the 'API Values' menu item (Ctrl + E)
+        apiValuesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN));
+
+        // Set the accelerator for the 'Vosk Models' menu item (Ctrl + M)
+        voskModelsMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.M, KeyCombination.CONTROL_DOWN));
     }
 
     public SpeechToTextService getSpeechToTextService() {
