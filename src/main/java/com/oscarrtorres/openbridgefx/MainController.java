@@ -160,7 +160,7 @@ public class MainController {
         chatEntry.setSpacing(5); // Set spacing between elements
         chatEntry.setUserData(chat);
 
-        String fullText = lastEntry.getFinalPrompt();
+        String fullText = lastEntry.getFinalPrompt().replaceAll("\\s+", " ").trim();
         String displayedText = (fullText.length() > 30) ? fullText.substring(0, 30) + "..." : fullText;
 
         Text messageText = new Text(displayedText);
