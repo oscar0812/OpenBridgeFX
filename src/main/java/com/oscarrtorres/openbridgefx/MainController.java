@@ -9,12 +9,10 @@ import com.oscarrtorres.openbridgefx.services.SpeechToTextService;
 import com.oscarrtorres.openbridgefx.services.AITokenService;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import com.oscarrtorres.openbridgefx.utils.Toast;
-import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -28,18 +26,17 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Window;
-import javafx.util.Duration;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -423,72 +420,98 @@ public class MainController {
         bottomLabel.setTextFill(Color.GRAY);
         bottomLabel.setFont(new Font("Arial", 12));
 
+        HBox dotsHBox = new HBox(2);
+        dotsHBox.setSpacing(2);
+
+        Circle dot1 = new Circle(3, Color.GRAY);
+        Circle dot2 = new Circle(3, Color.GRAY);
+        Circle dot3 = new Circle(3, Color.GRAY);
+
+        dotsHBox.getChildren().addAll(dot1, dot2, dot3);
+        dotsHBox.setPadding(new Insets(25, 0, 0, 0));
+        dotsHBox.setCursor(javafx.scene.Cursor.HAND);
+
         VBox messageBubble = new VBox(5);
-        messageBubble.setCursor(javafx.scene.Cursor.HAND);
-        messageBubble.setUserData(entry);
         messageBubble.getChildren().addAll(senderLabel, messageTextFlow, bottomLabel);
+        messageBubble.setCursor(javafx.scene.Cursor.HAND);
 
         HBox messageMainParent = new HBox();
-        messageMainParent.getChildren().add(messageBubble);
+        messageMainParent.setSpacing(8);
 
         if (isSent) {
             messageMainParent.setAlignment(Pos.CENTER_RIGHT);
+
             messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightblue; -fx-text-fill: black;");
-            messageBubble.setOnMouseClicked(event -> onSentMessageBubbleClick(messageBubble));
+            messageBubble.setOnMouseClicked(event -> onSentMessageBubbleClick(entry));
+
+            messageMainParent.getChildren().addAll(dotsHBox, messageBubble);
         } else {
+            // For received messages, align the dots to the right of the bubble
             messageMainParent.setAlignment(Pos.CENTER_LEFT);
             messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightgreen; -fx-text-fill: black;");
-            messageBubble.setOnMouseClicked(event -> onResponseMessageBubbleClick(messageBubble));
+            messageBubble.setOnMouseClicked(event -> onResponseMessageBubbleClick(entry));
+
+            // Add the message bubble to the row
+            messageMainParent.getChildren().add(messageBubble);
+
+            messageMainParent.getChildren().add(dotsHBox); // Now the dots will appear to the right of the message bubble
         }
 
         // Ensure dynamic height adjustments are allowed
         messageMainParent.setPrefHeight(Region.USE_COMPUTED_SIZE);
         messageBubble.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
-        setMessageBubbleHoverMenu(messageBubble, entry, message, isSent);
+        dotsHBox.setOnMouseClicked(event -> onDotsClick(event, dotsHBox, messageBubble, entry, isSent));
 
+        // Add the message to the output container
         outputContainer.getChildren().add(messageMainParent);
     }
 
-    // show menu when you hover over bubbles
-    private void setMessageBubbleHoverMenu(VBox messageBubble, ChatEntry entry, String message, boolean isSent) {
-        // Create ContextMenu with options
+    private ContextMenu currentContextMenu = null;
+
+    private void onDotsClick(MouseEvent event, HBox dotsHBox, VBox messageBubble, ChatEntry data, boolean isSent) {
+        // If there's already a menu showing, hide it
+        if (currentContextMenu != null && currentContextMenu.isShowing()) {
+            currentContextMenu.hide();
+        }
+
+        // Create the context menu
         ContextMenu contextMenu = new ContextMenu();
 
-        // Option 1 to replace TextFlow content with WebView
-        MenuItem option1 = new MenuItem("Show in WebView");
-        option1.setOnAction(event -> showMarkdown(messageBubble, message, isSent));
+        // Create menu items
+        MenuItem markdownItem = new MenuItem("Show Markdown");
+        MenuItem copyItem = new MenuItem("Copy");
 
-        // Option 2 (example of another option)
-        MenuItem option2 = new MenuItem("Option 2");
-        option2.setOnAction(event -> handleOption2(entry));
-
-        // Add options to the context menu
-        contextMenu.getItems().addAll(option1, option2);
-
-        PauseTransition hoverTimer = new PauseTransition(Duration.seconds(2));
-
-        messageBubble.setOnMouseEntered((MouseEvent event) -> {
-            hoverTimer.playFromStart();
+        // Set actions for the menu items
+        markdownItem.setOnAction(e -> {
+            // Handle Edit action
+            showMarkdown(messageBubble, isSent);
         });
 
-        // Start the hover timer and show the menu at the mouse coordinates after x seconds
-        hoverTimer.setOnFinished(event -> {
-                    Point p = MouseInfo.getPointerInfo().getLocation();
-                    contextMenu.show(messageBubble, p.x, p.y);
-                }
-        );
+        copyItem.setOnAction(e -> {
+            if(isSent) {
+                onSentMessageBubbleClick(data);
+            } else {
+                onResponseMessageBubbleClick(data);
+            }
+        });
 
-        // Cancel the timer if mouse exits before the delay
-        messageBubble.setOnMouseExited(event -> hoverTimer.stop());
+        // Add the items to the context menu
+        contextMenu.getItems().addAll(markdownItem, copyItem);
+
+        // Show the context menu at the location of the mouse click
+        contextMenu.show(dotsHBox, event.getScreenX(), event.getScreenY());
+
+        // Update the current context menu to the newly shown menu
+        currentContextMenu = contextMenu;
     }
 
-
     // Method to handle the first option click and display Markdown as HTML in WebView
-    private void showMarkdown(VBox bubbleContainer, String markdownMessage, boolean isSent) {
+    private void showMarkdown(VBox bubbleContainer, boolean isSent) {
         // Convert Markdown to HTML using CommonMark
+        String message = ((Text)((TextFlow) bubbleContainer.getChildren().get(1)).getChildren().get(0)).getText();
         Parser parser = Parser.builder().build();
-        org.commonmark.node.Node document = parser.parse(markdownMessage);
+        org.commonmark.node.Node document = parser.parse(message);
         HtmlRenderer renderer = HtmlRenderer.builder().build();
         String htmlContent = renderer.render(document);
 
@@ -523,18 +546,11 @@ public class MainController {
         return webViewContainer;
     }
 
-    // Sample method for the second option
-    private void handleOption2(ChatEntry entry) {
-        System.out.println("Option 2 clicked for entry: " + entry);
-    }
-
     private void clearMessageBubbles() {
         outputContainer.getChildren().clear();
     }
 
-    private void onSentMessageBubbleClick(VBox messageBubble) {
-        ChatEntry data = (ChatEntry) messageBubble.getUserData();
-
+    private void onSentMessageBubbleClick(ChatEntry data) {
         promptTextArea.setText(data.getRawPrompt()); // will trigger updateParameters()
 
         for(Node node: parameterContainer.getChildren()) {
@@ -559,9 +575,7 @@ public class MainController {
         Toast.makeText(stage, "Copied to clipboard!");
     }
 
-    private void onResponseMessageBubbleClick(VBox messageBubble) {
-        ChatEntry data = (ChatEntry) messageBubble.getUserData();
-
+    private void onResponseMessageBubbleClick(ChatEntry data) {
         promptTextArea.setText(data.getResponse()); // will trigger updateParameters()
 
         copyTextToClipboard(data.getResponse());
