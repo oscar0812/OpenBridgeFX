@@ -3,7 +3,7 @@ package com.oscarrtorres.openbridgefx;
 import com.knuddels.jtokkit.api.ModelType;
 import com.oscarrtorres.openbridgefx.dialogs.ApiPropertiesDialog;
 import com.oscarrtorres.openbridgefx.models.*;
-import com.oscarrtorres.openbridgefx.services.ApiService;
+import com.oscarrtorres.openbridgefx.services.AIRequestService;
 import com.oscarrtorres.openbridgefx.services.ChatService;
 import com.oscarrtorres.openbridgefx.services.SpeechToTextService;
 import com.oscarrtorres.openbridgefx.services.TokenService;
@@ -360,10 +360,10 @@ public class MainController {
         addMessageBubble(chatEntry, true);
 
         // Create and start the GPT API service
-        ApiService gptApiService = new ApiService(chatEntry.getFinalPrompt(), yamlData);
+        AIRequestService gptAIRequestService = new AIRequestService(chatEntry.getFinalPrompt(), yamlData);
 
-        gptApiService.setOnSucceeded(event -> {
-            String gptResponse = gptApiService.getValue();
+        gptAIRequestService.setOnSucceeded(event -> {
+            String gptResponse = gptAIRequestService.getValue();
             chatEntry.setResponse(gptResponse);
             chatEntry.setResponseInfo(tokenService.getResponseInfo(gptResponse));
 
@@ -375,13 +375,13 @@ public class MainController {
             updateChatHistoryList();
         });
 
-        gptApiService.setOnFailed(event -> {
-            Throwable exception = gptApiService.getException();
+        gptAIRequestService.setOnFailed(event -> {
+            Throwable exception = gptAIRequestService.getException();
             chatEntry.setResponse("Error: " + exception.getMessage());
             addMessageBubble(chatEntry, false); // Handle error
         });
 
-        gptApiService.start(); // Start the service
+        gptAIRequestService.start(); // Start the service
     }
 
     private void addMessageBubble(ChatEntry entry, boolean isSent) {
