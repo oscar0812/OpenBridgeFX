@@ -484,13 +484,6 @@ public class MainController {
         messageTextFlow.setPadding(new Insets(10));
         messageTextFlow.setStyle("-fx-font-family: Arial; -fx-font-size: 14px; -fx-background-radius: 15;");
 
-        // Styling the text background based on sent/received
-        if (isSent) {
-            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightblue; -fx-text-fill: black;");
-        } else {
-            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightgreen; -fx-text-fill: black;");
-        }
-
         // Create sender label with timestamp at the top
         Label senderLabel = new Label(isSent ? "You (" + timestamp + ")" : "Other (" + timestamp + ")");
         senderLabel.setTextFill(Color.GRAY);
@@ -502,39 +495,41 @@ public class MainController {
         bottomLabel.setTextFill(Color.GRAY);
         bottomLabel.setFont(new Font("Arial", 12));
 
-        VBox bubbleContainer = new VBox(5);
-        bubbleContainer.getChildren().addAll(senderLabel, messageTextFlow, bottomLabel);
-
-        HBox messageBubble = new HBox();
-        messageBubble.setUserData(entry);
+        VBox messageBubble = new VBox(5);
         messageBubble.setCursor(javafx.scene.Cursor.HAND);
-        messageBubble.getChildren().add(bubbleContainer);
+        messageBubble.setUserData(entry);
+        messageBubble.getChildren().addAll(senderLabel, messageTextFlow, bottomLabel);
+
+        HBox messageMainParent = new HBox();
+        messageMainParent.getChildren().add(messageBubble);
 
         if (isSent) {
-            messageBubble.setAlignment(Pos.CENTER_RIGHT);
+            messageMainParent.setAlignment(Pos.CENTER_RIGHT);
+            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightblue; -fx-text-fill: black;");
             messageBubble.setOnMouseClicked(event -> onSentMessageBubbleClick(messageBubble));
         } else {
-            messageBubble.setAlignment(Pos.CENTER_LEFT);
+            messageMainParent.setAlignment(Pos.CENTER_LEFT);
+            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightgreen; -fx-text-fill: black;");
             messageBubble.setOnMouseClicked(event -> onResponseMessageBubbleClick(messageBubble));
         }
 
         // Ensure dynamic height adjustments are allowed
+        messageMainParent.setPrefHeight(Region.USE_COMPUTED_SIZE);
         messageBubble.setPrefHeight(Region.USE_COMPUTED_SIZE);
-        bubbleContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
-        setMessageBubbleHoverMenu(bubbleContainer, messageBubble, entry, message, isSent);
+        setMessageBubbleHoverMenu(messageBubble, entry, message, isSent);
 
-        outputContainer.getChildren().add(messageBubble);
+        outputContainer.getChildren().add(messageMainParent);
     }
 
     // show menu when you hover over bubbles
-    private void setMessageBubbleHoverMenu(VBox bubbleContainer, HBox messageBubble, ChatEntry entry, String message, boolean isSent) {
+    private void setMessageBubbleHoverMenu(VBox messageBubble, ChatEntry entry, String message, boolean isSent) {
         // Create ContextMenu with options
         ContextMenu contextMenu = new ContextMenu();
 
         // Option 1 to replace TextFlow content with WebView
         MenuItem option1 = new MenuItem("Show in WebView");
-        option1.setOnAction(event -> handleOption1(bubbleContainer, message, isSent));
+        option1.setOnAction(event -> handleOption1(messageBubble, message, isSent));
 
         // Option 2 (example of another option)
         MenuItem option2 = new MenuItem("Option 2");
@@ -604,7 +599,7 @@ public class MainController {
         outputContainer.getChildren().clear();
     }
 
-    private void onSentMessageBubbleClick(HBox messageBubble) {
+    private void onSentMessageBubbleClick(VBox messageBubble) {
         ChatEntry data = (ChatEntry) messageBubble.getUserData();
 
         promptTextArea.setText(data.getRawPrompt()); // will trigger updateParameters()
@@ -629,7 +624,7 @@ public class MainController {
         Toast.makeText(stage, "Copied to clipboard!");
     }
 
-    private void onResponseMessageBubbleClick(HBox messageBubble) {
+    private void onResponseMessageBubbleClick(VBox messageBubble) {
         ChatEntry data = (ChatEntry) messageBubble.getUserData();
 
         promptTextArea.setText(data.getResponse()); // will trigger updateParameters()
