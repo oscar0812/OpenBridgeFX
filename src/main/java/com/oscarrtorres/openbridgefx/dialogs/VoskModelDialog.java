@@ -82,75 +82,7 @@ public class VoskModelDialog {
             modelRow.setSpacing(15);
             modelRow.setFillHeight(true);
 
-            downloadButton.setOnAction(e -> {
-                String modelNameText = model.getName();
-                String modelUrl = model.getZipUrl();
-                downloadButton.setDisable(true);
-                okButton.setDisable(true);
-
-                // Task to download the model with added exception handling
-                Task<Void> downloadTask = new Task<>() {
-                    @Override
-                    protected Void call() throws Exception {
-                        Path zipFilePath = Path.of(Constants.MODELS_DIR_PATH, modelUrl.substring(modelUrl.lastIndexOf('/') + 1));
-                        Files.createDirectories(zipFilePath.getParent());
-
-                        try (InputStream in = new URI(modelUrl).toURL().openStream();
-                             OutputStream out = Files.newOutputStream(zipFilePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-                            long fileSize = new URI(modelUrl).toURL().openConnection().getContentLengthLong();
-                            if (fileSize == -1) {
-                                throw new Exception("Could not retrieve file size, download may be incomplete.");
-                            }
-
-                            byte[] buffer = new byte[4096];
-                            long totalRead = 0;
-                            int bytesRead;
-
-                            while ((bytesRead = in.read(buffer)) != -1) {
-                                out.write(buffer, 0, bytesRead);
-                                totalRead += bytesRead;
-                                updateProgress(totalRead, fileSize);
-                            }
-
-                            if (totalRead != fileSize) {
-                                throw new Exception("File download was incomplete. Expected: " + fileSize + " bytes, but got: " + totalRead + " bytes.");
-                            }
-
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            throw e;
-                        }
-                        FileUtils.extractZipFile(zipFilePath, true);
-                        FileUtils.deleteFilePath(zipFilePath);
-                        return null;
-                    }
-                };
-
-                progressBar.progressProperty().bind(downloadTask.progressProperty());
-                progressBar.setVisible(true);
-
-                downloadTask.setOnSucceeded(event -> {
-                    controller.showInfoAlert("Download completed for: " + modelNameText);
-                    downloadButton.setText("Download Again");
-                    progressBar.setVisible(false);
-                    radioButton.setDisable(false);
-                    radioButton.setSelected(true);
-                    downloadButton.setDisable(false);
-                    okButton.setDisable(false);
-                });
-                downloadTask.setOnFailed(event -> {
-                    Throwable exception = downloadTask.getException();
-                    if (exception != null) {
-                        exception.printStackTrace();
-                    }
-                    controller.showErrorAlert("Download failed for: " + modelNameText);
-                    progressBar.setVisible(false);
-                    downloadButton.setDisable(false);
-                    okButton.setDisable(false);
-                });
-
-                new Thread(downloadTask).start();
-            });
+            downloadButton.setOnAction(e -> downloadClicked(model, downloadButton, okButton, progressBar, radioButton));
 
             modelList.getChildren().add(modelRow);
         }
@@ -166,23 +98,94 @@ public class VoskModelDialog {
         alert.getDialogPane().setContent(scrollPane);
         alert.getDialogPane().setPrefSize(950, 450); // Adjust as needed
 
-        // Set the OK button action
-        okButton.setOnAction(event -> {
-            RadioButton selectedButton = (RadioButton) toggleGroup.getSelectedToggle();
-            if (selectedButton != null) {
-                VoskModel voskModel = (VoskModel) selectedButton.getUserData();
-                System.out.println("Selected model: " + voskModel.getName());
-
-                yamlData.getVosk().setModel(voskModel.getName());
-
-                FileUtils.saveYamlData(yamlData);
-
-                this.controller.getSpeechToTextService().loadModel(voskModel.getName());
-            } else {
-                System.out.println("No model selected.");
-            }
-        });
+        okButton.setOnAction(event -> okButtonClicked(toggleGroup));
 
         alert.showAndWait();
+    }
+
+    public void downloadClicked(VoskModel model, Button downloadButton, Button okButton, ProgressBar progressBar, RadioButton radioButton) {
+        String modelNameText = model.getName();
+        String modelUrl = model.getZipUrl();
+        downloadButton.setDisable(true);
+        okButton.setDisable(true);
+
+        // Task to download the model with added exception handling
+        Task<Void> downloadTask = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                Path zipFilePath = Path.of(Constants.MODELS_DIR_PATH, modelUrl.substring(modelUrl.lastIndexOf('/') + 1));
+                Files.createDirectories(zipFilePath.getParent());
+
+                try (InputStream in = new URI(modelUrl).toURL().openStream();
+                     OutputStream out = Files.newOutputStream(zipFilePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                    long fileSize = new URI(modelUrl).toURL().openConnection().getContentLengthLong();
+                    if (fileSize == -1) {
+                        throw new Exception("Could not retrieve file size, download may be incomplete.");
+                    }
+
+                    byte[] buffer = new byte[4096];
+                    long totalRead = 0;
+                    int bytesRead;
+
+                    while ((bytesRead = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                        totalRead += bytesRead;
+                        updateProgress(totalRead, fileSize);
+                    }
+
+                    if (totalRead != fileSize) {
+                        throw new Exception("File download was incomplete. Expected: " + fileSize + " bytes, but got: " + totalRead + " bytes.");
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw e;
+                }
+                FileUtils.extractZipFile(zipFilePath, true);
+                FileUtils.deleteFilePath(zipFilePath);
+                return null;
+            }
+        };
+
+        progressBar.progressProperty().bind(downloadTask.progressProperty());
+        progressBar.setVisible(true);
+
+        downloadTask.setOnSucceeded(event -> {
+            controller.showInfoAlert("Download completed for: " + modelNameText);
+            downloadButton.setText("Download Again");
+            progressBar.setVisible(false);
+            radioButton.setDisable(false);
+            radioButton.setSelected(true);
+            downloadButton.setDisable(false);
+            okButton.setDisable(false);
+        });
+        downloadTask.setOnFailed(event -> {
+            Throwable exception = downloadTask.getException();
+            if (exception != null) {
+                exception.printStackTrace();
+            }
+            controller.showErrorAlert("Download failed for: " + modelNameText);
+            progressBar.setVisible(false);
+            downloadButton.setDisable(false);
+            okButton.setDisable(false);
+        });
+
+        new Thread(downloadTask).start();
+    }
+
+    public void okButtonClicked(ToggleGroup toggleGroup) {
+        RadioButton selectedButton = (RadioButton) toggleGroup.getSelectedToggle();
+        if (selectedButton != null) {
+            VoskModel voskModel = (VoskModel) selectedButton.getUserData();
+            System.out.println("Selected model: " + voskModel.getName());
+
+            yamlData.getVosk().setModel(voskModel.getName());
+
+            FileUtils.saveYamlData(yamlData);
+
+            this.controller.getSpeechToTextService().loadModel(voskModel.getName());
+        } else {
+            System.out.println("No model selected.");
+        }
     }
 }
