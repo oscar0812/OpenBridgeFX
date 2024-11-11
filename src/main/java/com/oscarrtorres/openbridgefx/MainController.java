@@ -13,6 +13,8 @@ import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -68,8 +70,8 @@ public class MainController {
     @FXML
     private MenuItem voskModelsMenuItem;
 
-    private static final double PARAMETER_HEIGHT = 200.0;
-    private static final double MAX_SCROLLPANE_HEIGHT = 900.0;
+    private static final double PARAMETER_HEIGHT = 150.0;
+    private static final double MAX_SCROLLPANE_HEIGHT = 400.0;
 
     private final ChatService chatService = new ChatService();
     private final SpeechToTextService speechToTextService = new SpeechToTextService();
@@ -274,12 +276,13 @@ public class MainController {
     private @NotNull Map<String, String> getCurrentParameters() {
         Map<String, String> currentParameters = new HashMap<>();
 
-        // Collect current parameters from the UI
-        for (var node : parameterContainer.getChildren()) {
-            if (node instanceof HBox parameterSet) {
-                TextField keyField = (TextField) parameterSet.getChildren().get(1);
-                TextField valueField = (TextField) parameterSet.getChildren().get(3);
+        for(Node node: parameterContainer.getChildren()) {
+            if (node instanceof VBox parameterSet) {
+                HBox row = (HBox) parameterSet.getChildren().get(0);
 
+                TextField keyField = (TextField) row.getChildren().get(1);
+                TextArea valueField = (TextArea) parameterSet.getChildren().get(2);
+                // Collect current parameters from the UI
                 String key = keyField.getText().trim();
                 String value = valueField.getText().trim();
 
@@ -297,25 +300,40 @@ public class MainController {
     }
 
     public void addParameterField(String key, String value) {
-        HBox parameterSet = new HBox(10);
+        // Outer VBox to stack the rows
+        VBox parameterSet = new VBox(10);
+
+        // First row (key + button)
+        HBox keyRow = new HBox(10);
         Label keyLabel = new Label("Key:");
         TextField keyField = new TextField();
         keyField.setText(key);
         keyField.setPromptText("Enter your param key here...");
+
+        keyField.setEditable(false);
+        // Apply gray tint and border to the keyField
+        keyField.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #d3d3d3; -fx-border-width: 1px; -fx-border-radius: 4px; -fx-opacity: 1;");
+        HBox.setHgrow(keyField, Priority.ALWAYS);
+
+        // Second row (value text area)
         Label valueLabel = new Label("Value:");
-        TextField valueField = new TextField();
-        valueField.setText(value);
-        valueField.setPromptText("Enter your param value here...");
+        TextArea valueTextArea = new TextArea();
+        valueTextArea.setText(value);
+        valueTextArea.setPromptText("Enter your param value here...");
+        valueTextArea.setPrefRowCount(3); // Adjust row count as needed
 
-        // Button to start/stop recording
-        Button recordingButton = getRecordingButton(valueField);
+        valueTextArea.setPrefWidth(Double.MAX_VALUE);
 
-        HBox.setHgrow(valueField, Priority.ALWAYS);
-        parameterSet.getChildren().addAll(keyLabel, keyField, valueLabel, valueField, recordingButton);
+        Button recordingButton = getRecordingButton(valueTextArea);
+
+        keyRow.getChildren().addAll(keyLabel, keyField, recordingButton);
+
+        parameterSet.getChildren().addAll(keyRow, valueLabel, valueTextArea);
+
         parameterContainer.getChildren().add(parameterSet);
     }
 
-    private @NotNull Button getRecordingButton(TextField valueField) {
+    private @NotNull Button getRecordingButton(TextArea valueField) {
         Button button = new Button("Start Recording");
         button.setOnAction(event -> {
             if (speechToTextService.isRecording()) {
@@ -519,10 +537,12 @@ public class MainController {
 
         promptTextArea.setText(data.getRawPrompt()); // will trigger updateParameters()
 
-        for (var node : parameterContainer.getChildren()) {
-            if (node instanceof HBox parameterSet) {
-                TextField keyField = (TextField) parameterSet.getChildren().get(1);
-                TextField valueField = (TextField) parameterSet.getChildren().get(3);
+        for(Node node: parameterContainer.getChildren()) {
+            if (node instanceof VBox parameterSet) {
+                HBox row = (HBox) parameterSet.getChildren().get(0);
+
+                TextField keyField = (TextField) row.getChildren().get(1);
+                TextArea valueField = (TextArea) parameterSet.getChildren().get(2);
 
                 String key = keyField.getText().trim();
 

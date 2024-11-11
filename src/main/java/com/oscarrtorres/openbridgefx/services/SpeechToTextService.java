@@ -9,6 +9,7 @@ import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import com.oscarrtorres.openbridgefx.utils.Toast;
 import javafx.concurrent.Task;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Window;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ public class SpeechToTextService {
         voskModelDialog.showDialog();
     }
 
-    public void startRecording(TextField valueField) {
+    public void startRecording(TextArea valueField) {
         if (Objects.isNull(speechToTextData)) {
             this.controller.showVoskModelDialog();
             return;

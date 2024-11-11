@@ -3,6 +3,7 @@ package com.oscarrtorres.openbridgefx.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oscarrtorres.openbridgefx.models.SpeechToTextData;
 import javafx.application.Platform;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
 import javax.sound.sampled.*;
@@ -11,13 +12,13 @@ import java.util.Map;
 
 public class SpeechToTextRecordingThread implements Runnable {
 
-    private final TextField valueField;
+    private final TextArea valueField;
     private final SpeechToTextData data;
     private final StringBuilder accumulatedText = new StringBuilder();
     private volatile boolean running = true;
     private final ObjectMapper objectMapper = new ObjectMapper(); // For JSON parsing
 
-    public SpeechToTextRecordingThread(TextField valueField, SpeechToTextData data) throws IOException {
+    public SpeechToTextRecordingThread(TextArea valueField, SpeechToTextData data) throws IOException {
         this.valueField = valueField;
         this.data = data;
     }
