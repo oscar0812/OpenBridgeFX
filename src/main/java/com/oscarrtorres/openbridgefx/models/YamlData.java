@@ -68,7 +68,7 @@ public class YamlData {
 
     public static class VoskConfig {
         private String model;
-        private List<String> modelList;
+        private List<VoskModel> modelList;
 
         public String getModel() {
             return model;
@@ -78,11 +78,11 @@ public class YamlData {
             this.model = model;
         }
 
-        public List<String> getModelList() {
+        public List<VoskModel> getModelList() {
             return modelList;
         }
 
-        public void setModelList(List<String> modelList) {
+        public void setModelList(List<VoskModel> modelList) {
             this.modelList = modelList;
         }
     }

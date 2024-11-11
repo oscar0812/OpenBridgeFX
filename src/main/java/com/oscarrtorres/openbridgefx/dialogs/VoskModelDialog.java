@@ -42,7 +42,7 @@ public class VoskModelDialog {
         modelList.setPadding(new Insets(15));
 
         // Sample models with download links
-        List<VoskModel> models = yamlData.getVosk().getModelList().stream().map(VoskModel::new).toList();
+        List<VoskModel> models = yamlData.getVosk().getModelList();
 
         // Group for the radio buttons so that only one can be selected at a time
         ToggleGroup toggleGroup = new ToggleGroup();
@@ -50,7 +50,7 @@ public class VoskModelDialog {
 
         // Populate the VBox with models, download buttons, and radio buttons
         for (VoskModel model : models) {
-            Label modelName = new Label(model.getName());
+            Label modelName = new Label(model.getLanguage() + " - " + model.getName());
             String modelDir = Constants.MODELS_DIR_PATH + File.separator + model.getName().replace(".zip", "");
             boolean modelExists = Files.exists(Path.of(modelDir));
 

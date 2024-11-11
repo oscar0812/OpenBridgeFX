@@ -4,6 +4,7 @@ import com.oscarrtorres.openbridgefx.MainController;
 import com.oscarrtorres.openbridgefx.dialogs.VoskModelDialog;
 import com.oscarrtorres.openbridgefx.models.Constants;
 import com.oscarrtorres.openbridgefx.models.SpeechToTextData;
+import com.oscarrtorres.openbridgefx.models.VoskModel;
 import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import com.oscarrtorres.openbridgefx.utils.Toast;
@@ -11,17 +12,16 @@ import javafx.concurrent.Task;
 import javafx.scene.control.TextField;
 import javafx.stage.Window;
 import org.jetbrains.annotations.NotNull;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SpeechToTextService {
     private MainController controller;
@@ -85,40 +85,46 @@ public class SpeechToTextService {
 
     public void fetchVoskModelList(YamlData yamlData) {
         MainController mainController = this.controller;
-        Task<List<String>> loadDataTask = new Task<>() {
+        Task<List<VoskModel>> loadDataTask = new Task<>() {
             @Override
-            protected List<String> call() {
-                String urlString = "https://alphacephei.com/vosk/models"; // Replace with your target URL
-                ArrayList<String> zipLinks = new ArrayList<>();
-
+            protected List<VoskModel> call() {
+                List<VoskModel> models = new ArrayList<>();
                 try {
-                    // Open a connection to the URL and create a BufferedReader to read the content
-                    URL url = new URL(urlString);
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+                    // Connect to the URL and parse the HTML
+                    Document doc = Jsoup.connect("https://alphacephei.com/vosk/models").get();
 
-                    String line;
-                    // Regex pattern to match hrefs that end with .zip
-                    Pattern pattern = Pattern.compile("href=[\"']([^\"'>]+\\.zip)[\"']");
+                    Element firstTableBody = doc.select("table tbody").first();
 
-                    while ((line = reader.readLine()) != null) {
-                        Matcher matcher = pattern.matcher(line);
-                        while (matcher.find()) {
-                            // Print each href that ends with .zip
-                            zipLinks.add(matcher.group(1));
+                    if (firstTableBody != null) {
+                        Elements rows = firstTableBody.select("tr");
+                        String currentType = "";
+
+                        for (Element row : rows) {
+                            Elements cells = row.select("td");
+
+                            if (!cells.isEmpty() && !Objects.requireNonNull(cells.first()).select("strong").isEmpty()) {
+                                currentType = Objects.requireNonNull(cells.first()).text().trim();
+                            } else {
+                                // Check for .zip URLs in the cells
+                                Elements links = row.select("a[href^=https://alphacephei.com/vosk/models][href$=.zip]");
+                                for (Element link : links) {
+                                    String href = link.attr("href");
+                                    models.add(new VoskModel(href, currentType));
+                                }
+                            }
                         }
+                    } else {
+                        System.out.println("No table body found.");
                     }
-
-                    reader.close();
-                } catch (Exception e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
-                return zipLinks;
+                return models;
             }
 
             @Override
             protected void succeeded() {
-                List<String> zipLinks = getValue();
-                yamlData.getVosk().setModelList(zipLinks);
+                yamlData.getVosk().setModelList(getValue());
                 FileUtils.saveYamlData(yamlData);
                 System.out.println("Speech model list fetched successfully.");
             }

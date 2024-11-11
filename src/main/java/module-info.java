@@ -9,6 +9,7 @@ module com.oscarrtorres.openbridgefx {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
     requires com.almasb.fxgl.all;
+    requires org.jsoup;
     requires org.json;
     requires org.yaml.snakeyaml;
     requires jtokkit;
