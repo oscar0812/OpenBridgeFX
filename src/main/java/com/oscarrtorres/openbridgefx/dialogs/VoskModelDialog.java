@@ -177,7 +177,7 @@ public class VoskModelDialog {
 
                 FileUtils.saveYamlData(yamlData);
 
-                this.controller.loadSpeechRecognizerDataInBackground(voskModel.getName());
+                this.controller.getSpeechToTextService().loadModel(voskModel.getName());
             } else {
                 System.out.println("No model selected.");
             }

@@ -1,7 +1,7 @@
 package com.oscarrtorres.openbridgefx.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oscarrtorres.openbridgefx.models.SpeechRecognizerData;
+import com.oscarrtorres.openbridgefx.models.SpeechToTextData;
 import javafx.application.Platform;
 import javafx.scene.control.TextField;
 
@@ -9,15 +9,15 @@ import javax.sound.sampled.*;
 import java.io.IOException;
 import java.util.Map;
 
-public class SpeechRecognizerThread implements Runnable {
+public class SpeechToTextThread implements Runnable {
 
     private final TextField valueField;
-    private final SpeechRecognizerData data;
+    private final SpeechToTextData data;
     private final StringBuilder accumulatedText = new StringBuilder();
     private volatile boolean running = true;
     private final ObjectMapper objectMapper = new ObjectMapper(); // For JSON parsing
 
-    public SpeechRecognizerThread(TextField valueField, SpeechRecognizerData data) throws IOException {
+    public SpeechToTextThread(TextField valueField, SpeechToTextData data) throws IOException {
         this.valueField = valueField;
         this.data = data;
     }

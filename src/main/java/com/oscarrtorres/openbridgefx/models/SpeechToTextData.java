@@ -6,13 +6,13 @@ import org.vosk.Recognizer;
 import java.io.IOException;
 import java.util.Objects;
 
-public class SpeechRecognizerData {
+public class SpeechToTextData {
     private String modelPath;
     private String modelName;
     private Model model;
     private Recognizer recognizer;
 
-    public SpeechRecognizerData(String modelPath) {
+    public SpeechToTextData(String modelPath) {
         this.modelPath = modelPath;
         this.modelName = modelPath.substring(modelPath.lastIndexOf('/') + 1);
     }
