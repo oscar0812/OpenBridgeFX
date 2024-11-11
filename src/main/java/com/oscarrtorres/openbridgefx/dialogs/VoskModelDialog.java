@@ -6,10 +6,12 @@ import com.oscarrtorres.openbridgefx.models.VoskModel;
 import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import javafx.concurrent.Task;
+import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 
 import java.io.File;
 import java.io.InputStream;
@@ -34,6 +36,7 @@ public class VoskModelDialog {
     public void showDialog() {
         // Create an alert dialog with a custom content
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.initModality(Modality.APPLICATION_MODAL);
         alert.setTitle("Download Vosk Models");
         alert.setHeaderText(null);
 
@@ -47,6 +50,14 @@ public class VoskModelDialog {
         // Group for the radio buttons so that only one can be selected at a time
         ToggleGroup toggleGroup = new ToggleGroup();
         Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
+
+        // Initially disable the OK button
+        okButton.setDisable(true);
+
+        // Add a listener to enable the OK button only when a model is selected
+        toggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            okButton.setDisable(newToggle == null); // Disable if no selection
+        });
 
         // Populate the VBox with models, download buttons, and radio buttons
         for (VoskModel model : models) {
@@ -185,7 +196,8 @@ public class VoskModelDialog {
 
             this.controller.getSpeechToTextService().loadModel(voskModel.getName());
         } else {
-            System.out.println("No model selected.");
+            Alert warningAlert = new Alert(Alert.AlertType.WARNING, "Please select a model before proceeding.");
+            warningAlert.showAndWait();
         }
     }
 }
