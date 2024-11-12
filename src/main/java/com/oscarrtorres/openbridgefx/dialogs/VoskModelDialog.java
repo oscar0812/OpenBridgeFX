@@ -6,7 +6,6 @@ import com.oscarrtorres.openbridgefx.models.VoskModel;
 import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import javafx.concurrent.Task;
-import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;

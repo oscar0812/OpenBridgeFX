@@ -10,8 +10,6 @@ import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import com.oscarrtorres.openbridgefx.utils.Toast;
 import javafx.concurrent.Task;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.stage.Window;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -61,8 +59,7 @@ public class SpeechToTextService {
             this.controller.showVoskModelDialog();
             return;
         } else if (!speechToTextData.isLoaded()) {
-            Window stage = this.controller.getOutputScrollPane().getScene().getWindow();
-            Toast.makeText(stage, "The speech model is still loading...");
+            Toast.makeText("The speech model is still loading...");
             return;
         }
 

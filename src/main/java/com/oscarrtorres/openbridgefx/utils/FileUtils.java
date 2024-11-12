@@ -1,5 +1,6 @@
 package com.oscarrtorres.openbridgefx.utils;
 
+import com.oscarrtorres.openbridgefx.models.ChatData;
 import com.oscarrtorres.openbridgefx.models.Constants;
 import com.oscarrtorres.openbridgefx.models.YamlData;
 import org.yaml.snakeyaml.DumperOptions;
@@ -78,6 +79,11 @@ public class FileUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void deleteChatFile(ChatData chatData) {
+        Path chatJsonPath = Path.of(Constants.CHATS_DIR_PATH, chatData.getFileName());
+        deleteFilePath(chatJsonPath);
     }
 
     public static void deleteFilePath(Path filePath) {

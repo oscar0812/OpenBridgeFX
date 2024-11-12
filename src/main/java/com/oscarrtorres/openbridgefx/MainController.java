@@ -4,21 +4,16 @@ import com.knuddels.jtokkit.api.ModelType;
 import com.oscarrtorres.openbridgefx.dialogs.ApiPropertiesDialog;
 import com.oscarrtorres.openbridgefx.models.*;
 import com.oscarrtorres.openbridgefx.services.AIRequestService;
+import com.oscarrtorres.openbridgefx.services.AITokenService;
 import com.oscarrtorres.openbridgefx.services.ChatService;
 import com.oscarrtorres.openbridgefx.services.SpeechToTextService;
-import com.oscarrtorres.openbridgefx.services.AITokenService;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import com.oscarrtorres.openbridgefx.utils.Toast;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -32,7 +27,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import javafx.stage.Window;
+import javafx.stage.Stage;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -80,9 +74,6 @@ public class MainController {
 
     @FXML
     public void initialize() {
-        setKeyboardShortcuts();
-        validateYamlFile();
-
         promptTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
             updateParameters(newValue);
         });
@@ -90,6 +81,15 @@ public class MainController {
         outputContainer.heightProperty().addListener((observable, oldValue, newValue) -> {
             outputScrollPane.setVvalue(1.0);  // Scrolls to the bottom
         });
+
+        Platform.runLater(this::afterInitialize);
+    }
+
+    private void afterInitialize() {
+        Toast.setStage((Stage) outputScrollPane.getScene().getWindow());
+
+        setKeyboardShortcuts();
+        validateYamlFile();
 
         parameterScrollPane.setVisible(false);
         parameterScrollPane.setManaged(false);
@@ -151,11 +151,12 @@ public class MainController {
 
     private void createChatDataRow(ChatData chat) {
         ChatEntry lastEntry = chat.getLastChatEntry();
-        // Create a VBox for the chat entry
-        VBox chatEntry = new VBox();
-        chatEntry.setPadding(new Insets(10)); // Set padding for the entire chat entry
-        chatEntry.setSpacing(5); // Set spacing between elements
-        chatEntry.setUserData(chat);
+
+        // Create a VBox for the chat entry content
+        VBox chatEntryContent = new VBox();
+        chatEntryContent.setPadding(new Insets(10));
+        chatEntryContent.setSpacing(5);
+        chatEntryContent.setUserData(chat);
 
         String fullText = lastEntry.getFinalPrompt().replaceAll("\\s+", " ").trim();
         String displayedText = (fullText.length() > 30) ? fullText.substring(0, 30) + "..." : fullText;
@@ -163,24 +164,54 @@ public class MainController {
         Text messageText = new Text(displayedText);
         messageText.setFont(new Font("Arial", 14));
 
-        // Create the charge text
         String subInfoText = String.format("%s | $%.8f", lastEntry.getTimestamp(), chat.getTotalCharge());
         Text subInfo = new Text(subInfoText);
         subInfo.setFont(new Font("Arial", 12));
         subInfo.setFill(Color.GRAY);
 
-        // Create a horizontal line (separator)
-        Separator separator = new Separator();
-        separator.setStyle("-fx-background-color: lightgray;"); // Customize line color
+        chatEntryContent.getChildren().addAll(messageText, subInfo);
 
-        // Add all elements to the chat entry
-        chatEntry.getChildren().addAll(messageText, subInfo);
+        // Create the Delete button
+        Button deleteButton = new Button("Delete");
+        deleteButton.setVisible(false); // Hidden by default
+        deleteButton.setOnAction(event -> deleteChat(chat));
 
-        // Add the chat entry to the history VBox
-        historyContainer.getChildren().addAll(chatEntry, separator);
+        // Overlay the button on the chat entry content
+        StackPane chatEntryContainer = new StackPane();
+        chatEntryContainer.getChildren().addAll(chatEntryContent, deleteButton);
+        StackPane.setAlignment(deleteButton, Pos.TOP_RIGHT);
+        chatEntryContainer.setPadding(new Insets(0, 5, 0, 0));
 
-        chatEntry.setCursor(javafx.scene.Cursor.HAND);
-        chatEntry.setOnMouseClicked(event -> onChatHistoryClick(chat));
+        // Show and hide the button on hover
+        chatEntryContainer.setOnMouseEntered(event -> deleteButton.setVisible(true));
+        chatEntryContainer.setOnMouseExited(event -> deleteButton.setVisible(false));
+
+        // Add the chat entry container to the history container
+        historyContainer.getChildren().addAll(chatEntryContainer, new Separator());
+
+        deleteButton.setCursor(javafx.scene.Cursor.HAND);
+        chatEntryContent.setCursor(javafx.scene.Cursor.HAND);
+        chatEntryContent.setOnMouseClicked(event -> onChatHistoryClick(chat));
+    }
+
+    private void deleteChat(ChatData chat) {
+        // Create a confirmation alert
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Confirmation");
+        alert.setHeaderText("Are you sure you want to delete this chat?");
+        alert.setContentText("This action cannot be undone.");
+
+        // Show the alert and wait for a user response
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            // User confirmed, proceed with deletion
+            FileUtils.deleteChatFile(chat);
+            setChatHistory();
+            Toast.makeText("Deleted Chat!");
+        } else {
+            // User chose not to delete
+            Toast.makeText("Deletion cancelled.");
+        }
     }
 
     private void validateYamlFile() {
@@ -273,7 +304,7 @@ public class MainController {
     private @NotNull Map<String, String> getCurrentParameters() {
         Map<String, String> currentParameters = new HashMap<>();
 
-        for(Node node: parameterContainer.getChildren()) {
+        for (Node node : parameterContainer.getChildren()) {
             if (node instanceof VBox parameterSet) {
                 HBox row = (HBox) parameterSet.getChildren().get(0);
 
@@ -489,7 +520,7 @@ public class MainController {
         });
 
         copyItem.setOnAction(e -> {
-            if(isSent) {
+            if (isSent) {
                 onSentMessageBubbleClick(data);
             } else {
                 onResponseMessageBubbleClick(data);
@@ -509,7 +540,7 @@ public class MainController {
     // Method to handle the first option click and display Markdown as HTML in WebView
     private void showMarkdown(VBox bubbleContainer, boolean isSent) {
         // Convert Markdown to HTML using CommonMark
-        String message = ((Text)((TextFlow) bubbleContainer.getChildren().get(1)).getChildren().get(0)).getText();
+        String message = ((Text) ((TextFlow) bubbleContainer.getChildren().get(1)).getChildren().get(0)).getText();
         Parser parser = Parser.builder().build();
         org.commonmark.node.Node document = parser.parse(message);
         HtmlRenderer renderer = HtmlRenderer.builder().build();
@@ -553,7 +584,7 @@ public class MainController {
     private void onSentMessageBubbleClick(ChatEntry data) {
         promptTextArea.setText(data.getRawPrompt()); // will trigger updateParameters()
 
-        for(Node node: parameterContainer.getChildren()) {
+        for (Node node : parameterContainer.getChildren()) {
             if (node instanceof VBox parameterSet) {
                 HBox row = (HBox) parameterSet.getChildren().get(0);
 
@@ -571,8 +602,7 @@ public class MainController {
 
         copyTextToClipboard(data.getFinalPrompt());
 
-        Window stage = outputScrollPane.getScene().getWindow();
-        Toast.makeText(stage, "Copied to clipboard!");
+        Toast.makeText("Copied to clipboard!");
     }
 
     private void onResponseMessageBubbleClick(ChatEntry data) {
@@ -580,8 +610,7 @@ public class MainController {
 
         copyTextToClipboard(data.getResponse());
 
-        Window stage = outputScrollPane.getScene().getWindow();
-        Toast.makeText(stage, "Copied to clipboard!");
+        Toast.makeText("Copied to clipboard!");
     }
 
     private void copyTextToClipboard(String text) {

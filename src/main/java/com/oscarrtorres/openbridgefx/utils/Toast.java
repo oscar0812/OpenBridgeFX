@@ -12,12 +12,16 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.stage.Window;
 import javafx.util.Duration;
 
 public final class Toast {
-    public static void makeText(Window window, String toastMsg) {
-        Toast.makeText((Stage) window, toastMsg, 2000, 200, 200);
+    private static Stage stage;
+
+    public static void setStage(Stage stage) {
+        Toast.stage = stage;
+    }
+    public static void makeText(String toastMsg) {
+        Toast.makeText(stage, toastMsg, 2000, 200, 200);
     }
     public static void makeText(Stage ownerStage, String toastMsg, int toastDelay, int fadeInDelay, int fadeOutDelay) {
         Stage toastStage = new Stage();

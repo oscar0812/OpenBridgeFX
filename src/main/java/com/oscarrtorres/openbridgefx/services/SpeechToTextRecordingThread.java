@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oscarrtorres.openbridgefx.models.SpeechToTextData;
 import javafx.application.Platform;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 
 import javax.sound.sampled.*;
 import java.io.IOException;
