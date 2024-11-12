@@ -16,11 +16,12 @@ public class AITokenService {
     EncodingRegistry registry = Encodings.newDefaultEncodingRegistry();
     Encoding encoding;
 
-    public AITokenService(ModelType modelType) {
+    public AITokenService() {
         // Initialize model pricing data
         modelPricingMap.put(ModelType.GPT_4O_MINI, new ModelPricing(ModelType.GPT_4O_MINI, 0.15, 0.60));
+    }
 
-
+    public void setModelType(ModelType modelType) {
         this.modelType = modelType;
         encoding = registry.getEncodingForModel(modelType);
     }
@@ -41,10 +42,6 @@ public class AITokenService {
         return new TokenCostInfo(tokenCount, totalPrice);
     }
 
-    public void setModelType(ModelType modelType) {
-        this.modelType = modelType;
-        encoding = registry.getEncodingForModel(modelType);
-    }
     public ModelType getModelType() {
         return modelType;
     }

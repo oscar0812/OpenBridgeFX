@@ -95,10 +95,17 @@ public class ApiPropertiesDialog {
                     // Hide error message if input is valid
                     errorLabel.setVisible(false);
 
+                    boolean updatedModel = !selectedModel.equals(yamlData.getChatGpt().getModel());
+
                     yamlData.getChatGpt().setApiKey(apiKey);
                     yamlData.getChatGpt().setApiUrl(apiUrl);
                     yamlData.getChatGpt().setModel(selectedModel);
                     FileUtils.saveYamlData(yamlData);
+
+                    if(updatedModel) {
+                        this.controller.updateModelType(selectedModel);
+                    }
+
                     break; // Break the loop if everything is valid
                 }
             } else {

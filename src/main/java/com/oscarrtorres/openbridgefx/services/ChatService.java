@@ -59,6 +59,7 @@ public class ChatService {
             jsonObject.put("timestamp", entry.getTimestamp());
             jsonObject.put("rawPrompt", entry.getRawPrompt());
             jsonObject.put("finalPrompt", entry.getFinalPrompt());
+            jsonObject.put("modelName", entry.getModelName());
             jsonObject.put("response", entry.getResponse());
 
             // Convert parameters to JSONObject
@@ -138,6 +139,7 @@ public class ChatService {
                         chatEntryJson.optString("rawPrompt"),
                         chatEntryJson.optString("response"),
                         chatEntryJson.optString("finalPrompt"),
+                        chatEntryJson.optString("modelName"),
                         parameters,
                         true,
                         promptTokenInfo,

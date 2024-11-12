@@ -66,8 +66,8 @@ public class MainController {
 
     private final ChatService chatService = new ChatService();
     private final SpeechToTextService speechToTextService = new SpeechToTextService();
+    private final AITokenService aiTokenService = new AITokenService();
 
-    private AITokenService aiTokenService;
     private YamlData yamlData = new YamlData();
 
     List<ChatData> chatHistory = new ArrayList<>();
@@ -105,6 +105,10 @@ public class MainController {
 
         // Set the accelerator for the 'Vosk Models' menu item (Ctrl + M)
         voskModelsMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.M, KeyCombination.CONTROL_DOWN));
+    }
+
+    public void updateModelType(String modelName) {
+        aiTokenService.setModelType(ModelType.fromName(modelName).orElseThrow());
     }
 
     public SpeechToTextService getSpeechToTextService() {
@@ -247,7 +251,7 @@ public class MainController {
             showApiPropertiesDialog();
         }
 
-        aiTokenService = new AITokenService(ModelType.fromName(yamlData.getChatGpt().getModel()).orElseThrow());
+        updateModelType(yamlData.getChatGpt().getModel());
 
         if (Objects.isNull(yamlData.getVosk().getModelList()) || yamlData.getVosk().getModelList().isEmpty()) {
             speechToTextService.fetchVoskModelList(yamlData);
@@ -403,7 +407,8 @@ public class MainController {
     @FXML
     public void onSendButtonClick() {
         ChatEntry chatEntry = new ChatEntry();
-        chatEntry.setTimestamp(chatService.getCurrentTimestamp());
+        chatEntry.setModelName(aiTokenService.getModelType().getName());
+        chatEntry.setTimestamp(ChatService.getCurrentTimestamp());
 
         chatEntry.setRawPrompt(promptTextArea.getText());
         Map<String, String> parameters = getCurrentParameters();
@@ -460,8 +465,10 @@ public class MainController {
         messageTextFlow.setPadding(new Insets(10));
         messageTextFlow.setStyle("-fx-font-family: Arial; -fx-font-size: 14px; -fx-background-radius: 15;");
 
+        String otherName = entry.getModelName().isBlank() ? "Other" : entry.getModelName();
+
         // Create sender label with timestamp at the top
-        Label senderLabel = new Label(isSent ? "You (" + timestamp + ")" : "Other (" + timestamp + ")");
+        Label senderLabel = new Label(isSent ? "You (" + timestamp + ")" : otherName + " (" + timestamp + ")");
         senderLabel.setTextFill(Color.GRAY);
         senderLabel.setFont(new Font("Arial", 12));
 

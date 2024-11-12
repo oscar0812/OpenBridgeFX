@@ -8,6 +8,7 @@ public class ChatEntry {
     private String rawPrompt;
     private String response;
     private String finalPrompt;
+    private String modelName;
     private Map<String, String> parameters;
 
     private boolean loadedFromJson;
@@ -20,15 +21,17 @@ public class ChatEntry {
         this.rawPrompt = "";
         this.response = "";
         this.finalPrompt = "";
+        this.modelName = "";
         this.parameters = new HashMap<>();
     }
 
-    public ChatEntry(String timestamp, String rawPrompt, String response, String finalPrompt,
+    public ChatEntry(String timestamp, String rawPrompt, String response, String finalPrompt, String modelName,
                      Map<String, String> parameters, boolean loadedFromJson, TokenCostInfo promptTokenInfo, TokenCostInfo responseTokenInfo) {
         this.timestamp = timestamp;
         this.rawPrompt = rawPrompt;
         this.response = response;
         this.finalPrompt = finalPrompt;
+        this.modelName = modelName;
         this.parameters = parameters;
         this.loadedFromJson = loadedFromJson;
         this.promptInfo = promptTokenInfo;
@@ -65,6 +68,14 @@ public class ChatEntry {
 
     public void setFinalPrompt(String finalPrompt) {
         this.finalPrompt = finalPrompt;
+    }
+
+    public String getModelName() {
+        return modelName;
+    }
+
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
     }
 
     public Map<String, String> getParameters() {
