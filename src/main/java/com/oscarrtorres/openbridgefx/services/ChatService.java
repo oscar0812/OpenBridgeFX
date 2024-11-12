@@ -35,10 +35,7 @@ public class ChatService {
                 System.out.println("Created '" + Constants.CHATS_DIR_PATH + "' directory.");
             }
 
-            String fileName = getCurrentTimestamp().replaceAll("[^a-zA-Z0-9._-]", "_") + ".json";
-            this.currentChatData = new ChatData();
-            this.currentChatData.setFileName(fileName);
-            this.currentChatData.setChatEntries(FXCollections.observableArrayList());
+            this.currentChatData = new ChatData(getNewFileName());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -95,24 +92,24 @@ public class ChatService {
         }
     }
 
-    public ChatData loadFromJsonFile(String logFileName) {
-        String logFilePath = Constants.CHATS_DIR_PATH + File.separator + logFileName;
-        ObservableList<ChatEntry> logEntries = FXCollections.observableArrayList();
+    public ChatData loadFromJsonFile(String fileName) {
+        String chatFilePath = Constants.CHATS_DIR_PATH + File.separator + fileName;
+        ObservableList<ChatEntry> chatEntries = FXCollections.observableArrayList();
 
         try {
             // Read the JSON file as a string
-            String jsonContent = new String(Files.readAllBytes(Paths.get(logFilePath)), StandardCharsets.UTF_8);
+            String chatContent = Files.readString(Paths.get(chatFilePath));
 
             // Parse the string as a JSONArray
-            JSONArray logArray = new JSONArray(jsonContent);
+            JSONArray chatDataArray = new JSONArray(chatContent);
 
             // Iterate over the JSON array and add the entries as ConversationEntry objects
-            for (int i = 0; i < logArray.length(); i++) {
-                JSONObject logEntryJson = logArray.getJSONObject(i);
+            for (int i = 0; i < chatDataArray.length(); i++) {
+                JSONObject chatEntryJson = chatDataArray.getJSONObject(i);
 
                 // Extract parameters as a Map
                 Map<String, String> parameters = new HashMap<>();
-                JSONObject parametersJson = logEntryJson.getJSONObject("parameters");
+                JSONObject parametersJson = chatEntryJson.getJSONObject("parameters");
                 for (String key : parametersJson.keySet()) {
                     parameters.put(key, parametersJson.getString(key));
                 }
@@ -121,15 +118,15 @@ public class ChatService {
                 TokenCostInfo promptTokenInfo = null;
                 TokenCostInfo responseTokenInfo = null;
 
-                if (logEntryJson.has("promptTokenInfo")) {
-                    JSONObject promptTokenJson = logEntryJson.getJSONObject("promptTokenInfo");
+                if (chatEntryJson.has("promptTokenInfo")) {
+                    JSONObject promptTokenJson = chatEntryJson.getJSONObject("promptTokenInfo");
                     int promptTokenCount = promptTokenJson.optInt("tokenCount", 0);
                     double promptTotalCost = promptTokenJson.optDouble("totalCost", 0.0);
                     promptTokenInfo = new TokenCostInfo(promptTokenCount, promptTotalCost);
                 }
 
-                if (logEntryJson.has("responseTokenInfo")) {
-                    JSONObject responseTokenJson = logEntryJson.getJSONObject("responseTokenInfo");
+                if (chatEntryJson.has("responseTokenInfo")) {
+                    JSONObject responseTokenJson = chatEntryJson.getJSONObject("responseTokenInfo");
                     int responseTokenCount = responseTokenJson.optInt("tokenCount", 0);
                     double responseTotalCost = responseTokenJson.optDouble("totalCost", 0.0);
                     responseTokenInfo = new TokenCostInfo(responseTokenCount, responseTotalCost);
@@ -137,17 +134,17 @@ public class ChatService {
 
                 // Create a ConversationEntry object from JSON
                 ChatEntry chatEntry = new ChatEntry(
-                        logEntryJson.optString("timestamp"),
-                        logEntryJson.optString("rawPrompt"),
-                        logEntryJson.optString("response"),
-                        logEntryJson.optString("finalPrompt"),
+                        chatEntryJson.optString("timestamp"),
+                        chatEntryJson.optString("rawPrompt"),
+                        chatEntryJson.optString("response"),
+                        chatEntryJson.optString("finalPrompt"),
                         parameters,
                         true,
                         promptTokenInfo,
                         responseTokenInfo
                 );
 
-                logEntries.add(chatEntry);
+                chatEntries.add(chatEntry);
             }
 
 
@@ -159,12 +156,12 @@ public class ChatService {
 
         // set ChatData
         ChatData chatData = new ChatData();
-        chatData.setFileName(logFileName);
-        chatData.setChatEntries(logEntries);
-        chatData.setTotalCharge(logEntries.stream()
+        chatData.setFileName(fileName);
+        chatData.setChatEntries(chatEntries);
+        chatData.setTotalCharge(chatEntries.stream()
                 .mapToDouble(e -> e.getPromptInfo().getTotalCost() + e.getResponseInfo().getTotalCost()) // Extract the cost as a double stream
                 .sum());
-        chatData.setTimestamp(logEntries.get(logEntries.size()-1).getTimestamp());
+        chatData.setTimestamp(chatEntries.get(chatEntries.size()-1).getTimestamp());
 
         return chatData;
     }
@@ -200,8 +197,12 @@ public class ChatService {
         return chatDataList;
     }
 
+    public static String getNewFileName() {
+        return getCurrentTimestamp().replaceAll("[^a-zA-Z0-9._-]", "_") + ".json";
+    }
+
     // Utility method to get the current timestamp
-    public String getCurrentTimestamp() {
+    public static String getCurrentTimestamp() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return LocalDateTime.now().format(formatter);
     }

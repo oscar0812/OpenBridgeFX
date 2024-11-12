@@ -146,7 +146,26 @@ public class MainController {
         for (ChatData chat : chatHistory) {
             createChatDataRow(chat);
         }
+        Button newChatButton = new Button("New Chat");
+        newChatButton.setCursor(javafx.scene.Cursor.HAND);
 
+        // Add an event handler for the button
+        newChatButton.setOnAction(event -> onNewChatClicked());
+
+        // Center the button in a container if needed
+        HBox buttonContainer = new HBox(newChatButton);
+        buttonContainer.setAlignment(Pos.CENTER);
+        buttonContainer.setPadding(new Insets(10)); // Add padding at the top
+
+        // Add the button container to the history container
+        historyContainer.getChildren().add(buttonContainer);
+    }
+
+    private void onNewChatClicked() {
+        ChatData data = new ChatData(ChatService.getNewFileName());
+        onChatHistoryClick(data);
+
+        chatHistory.add(data);
     }
 
     private void createChatDataRow(ChatData chat) {

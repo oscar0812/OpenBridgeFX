@@ -1,5 +1,6 @@
 package com.oscarrtorres.openbridgefx.models;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 public class ChatData {
@@ -7,6 +8,15 @@ public class ChatData {
     private ObservableList<ChatEntry> chatEntries;
     private double totalCharge;
     private String timestamp;
+
+    public ChatData() {
+
+    }
+
+    public ChatData(String fileName) {
+        this.fileName = fileName;
+        this.chatEntries = FXCollections.observableArrayList();
+    }
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
