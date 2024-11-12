@@ -82,13 +82,14 @@ public class MainController {
             outputScrollPane.setVvalue(1.0);  // Scrolls to the bottom
         });
 
+        setKeyboardShortcuts();
+
         Platform.runLater(this::afterInitialize);
     }
 
     private void afterInitialize() {
         Toast.setStage((Stage) outputScrollPane.getScene().getWindow());
 
-        setKeyboardShortcuts();
         validateYamlFile();
 
         parameterScrollPane.setVisible(false);

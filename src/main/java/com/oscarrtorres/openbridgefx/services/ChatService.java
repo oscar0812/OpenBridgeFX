@@ -92,7 +92,7 @@ public class ChatService {
         }
     }
 
-    public ChatData loadFromJsonFile(String fileName) {
+    private ChatData loadFromJsonFile(String fileName) {
         String chatFilePath = Constants.CHATS_DIR_PATH + File.separator + fileName;
         ObservableList<ChatEntry> chatEntries = FXCollections.observableArrayList();
 
