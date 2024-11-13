@@ -239,12 +239,6 @@ public class MainController {
     }
 
     private void validateYamlFile() {
-        File yamlFile = new File(Constants.PROJECT_YAML_FILE_PATH);
-        if (!yamlFile.exists()) {
-            showApiPropertiesDialog();
-        }
-
-        // file exists, but does it have all the required values?
         yamlData = FileUtils.getYamlData();
 
         // ChatGPT models

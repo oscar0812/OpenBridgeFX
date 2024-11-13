@@ -18,6 +18,11 @@ import java.util.zip.ZipInputStream;
 public class FileUtils {
 
     public static YamlData getYamlData() {
+        if(!Files.exists(Path.of(Constants.PROJECT_YAML_FILE_PATH))) {
+            System.out.println("Yaml file does not exist.");
+            return new YamlData();
+        }
+
         // Configure LoaderOptions to allow the specific package or class
         var loaderoptions = new LoaderOptions();
         TagInspector taginspector =
