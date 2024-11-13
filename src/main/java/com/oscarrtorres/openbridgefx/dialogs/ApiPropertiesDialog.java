@@ -3,6 +3,7 @@ package com.oscarrtorres.openbridgefx.dialogs;
 import com.oscarrtorres.openbridgefx.MainController;
 import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
+import com.oscarrtorres.openbridgefx.utils.Toast;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -100,7 +101,7 @@ public class ApiPropertiesDialog {
                     if (updatedModel) {
                         this.controller.updateModelType(selectedModel);
                     }
-
+                    Toast.makeText("Api properties set");
                     break; // Break the loop if everything is valid
                 }
             } else {

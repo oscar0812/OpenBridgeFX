@@ -21,11 +21,11 @@ public final class Toast {
         Toast.stage = stage;
     }
     public static void makeText(String toastMsg) {
-        Toast.makeText(stage, toastMsg, 2000, 200, 200);
+        Toast.makeText(toastMsg, 2000, 200, 200);
     }
-    public static void makeText(Stage ownerStage, String toastMsg, int toastDelay, int fadeInDelay, int fadeOutDelay) {
+    public static void makeText(String toastMsg, int toastDelay, int fadeInDelay, int fadeOutDelay) {
         Stage toastStage = new Stage();
-        toastStage.initOwner(ownerStage);
+        toastStage.initOwner(stage);
         toastStage.setResizable(false);
         toastStage.initStyle(StageStyle.TRANSPARENT);
 
@@ -44,8 +44,8 @@ public final class Toast {
         toastStage.setScene(scene);
 
         // Position toastStage at the bottom center of the owner stage
-        toastStage.setX(ownerStage.getX() + ownerStage.getWidth() / 2 - 100); // Adjust horizontal position as needed
-        toastStage.setY(ownerStage.getY() + ownerStage.getHeight() - 80);      // Set to bottom
+        toastStage.setX(stage.getX() + stage.getWidth() / 2 - 100); // Adjust horizontal position as needed
+        toastStage.setY(stage.getY() + stage.getHeight() - 80);      // Set to bottom
 
         toastStage.show();
 
