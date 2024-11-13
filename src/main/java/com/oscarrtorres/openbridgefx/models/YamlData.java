@@ -2,6 +2,7 @@ package com.oscarrtorres.openbridgefx.models;
 
 import com.knuddels.jtokkit.api.ModelType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,6 +35,7 @@ public class YamlData {
         private String apiKey;
         private String apiUrl = "https://api.openai.com/v1/chat/completions";
         private String model = ModelType.GPT_4O_MINI.getName();
+        private List<ModelPricing> modelList = new ArrayList<>();
 
         public boolean isValid() {
             return !Objects.isNull(getApiUrl()) && !getApiUrl().isBlank() &&
@@ -63,6 +65,14 @@ public class YamlData {
 
         public void setModel(String model) {
             this.model = model;
+        }
+
+        public List<ModelPricing> getModelList() {
+            return modelList;
+        }
+
+        public void setModelList(List<ModelPricing> modelList) {
+            this.modelList = modelList;
         }
     }
 

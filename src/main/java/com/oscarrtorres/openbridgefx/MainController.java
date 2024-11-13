@@ -247,12 +247,20 @@ public class MainController {
         // file exists, but does it have all the required values?
         yamlData = FileUtils.getYamlData();
 
+        // ChatGPT models
+        if (Objects.isNull(yamlData.getChatGpt().getModelList()) || yamlData.getChatGpt().getModelList().isEmpty()) {
+            yamlData.getChatGpt().setModelList(new ArrayList<>(aiTokenService.getDefaultModelPricingMap().values()));
+            FileUtils.saveYamlData(yamlData);
+        }
+        aiTokenService.setModelPricingList(yamlData.getChatGpt().getModelList());
+
         if (!yamlData.getChatGpt().isValid()) {
             showApiPropertiesDialog();
         }
 
         updateModelType(yamlData.getChatGpt().getModel());
 
+        // speechToText values
         if (Objects.isNull(yamlData.getVosk().getModelList()) || yamlData.getVosk().getModelList().isEmpty()) {
             speechToTextService.fetchVoskModelList(yamlData);
         } else if (!Objects.isNull(yamlData.getVosk().getModel()) && !yamlData.getVosk().getModel().isEmpty()) {

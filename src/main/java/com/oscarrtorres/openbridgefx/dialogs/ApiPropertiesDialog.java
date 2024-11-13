@@ -1,6 +1,5 @@
 package com.oscarrtorres.openbridgefx.dialogs;
 
-import com.knuddels.jtokkit.api.ModelType;
 import com.oscarrtorres.openbridgefx.MainController;
 import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
@@ -31,26 +30,22 @@ public class ApiPropertiesDialog {
         TextField apiKeyField = new TextField();
         apiKeyField.setPromptText("Enter API Key");
 
-        if(!Objects.isNull(yamlData.getChatGpt().getApiKey())) {
+        if (!Objects.isNull(yamlData.getChatGpt().getApiKey())) {
             apiKeyField.setText(yamlData.getChatGpt().getApiKey());
         }
 
         TextField apiUrlField = new TextField();
         apiUrlField.setPromptText("Enter API URL");
 
-        if(!Objects.isNull(yamlData.getChatGpt().getApiUrl())) {
+        if (!Objects.isNull(yamlData.getChatGpt().getApiUrl())) {
             apiUrlField.setText(yamlData.getChatGpt().getApiUrl());
         }
 
         // Create a ComboBox for model selection
         ComboBox<String> modelComboBox = new ComboBox<>();
         modelComboBox.getItems().addAll(
-                ModelType.GPT_4O.getName(),
-                ModelType.GPT_4O_MINI.getName(),
-                ModelType.GPT_4_32K.getName(),
-                ModelType.GPT_4_TURBO.getName(),
-                ModelType.GPT_3_5_TURBO.getName(),
-                ModelType.GPT_3_5_TURBO_16K.getName()
+                yamlData.getChatGpt().getModelList()
+                        .stream().map(m -> m.getModelType().getName()).toList()
         );
         modelComboBox.setPromptText("Select Model");
 
@@ -102,7 +97,7 @@ public class ApiPropertiesDialog {
                     yamlData.getChatGpt().setModel(selectedModel);
                     FileUtils.saveYamlData(yamlData);
 
-                    if(updatedModel) {
+                    if (updatedModel) {
                         this.controller.updateModelType(selectedModel);
                     }
 
@@ -110,7 +105,7 @@ public class ApiPropertiesDialog {
                 }
             } else {
                 // User clicked Cancel, exit the application
-                if(!yamlData.getChatGpt().isValid()) {
+                if (!yamlData.getChatGpt().isValid()) {
                     System.exit(0);
                 }
                 break;
