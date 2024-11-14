@@ -32,10 +32,10 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,6 +72,8 @@ public class MainController {
 
     List<ChatData> chatHistory = new ArrayList<>();
 
+    boolean isNewMessageAppended = true;
+
     @FXML
     public void initialize() {
         promptTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -79,7 +81,9 @@ public class MainController {
         });
 
         outputContainer.heightProperty().addListener((observable, oldValue, newValue) -> {
-            outputScrollPane.setVvalue(1.0);  // Scrolls to the bottom
+            if(isNewMessageAppended) {
+                outputScrollPane.setVvalue(1.0);  // Scrolls to the bottom
+            }
         });
 
         setKeyboardShortcuts();
@@ -458,14 +462,11 @@ public class MainController {
     }
 
     private void addMessageBubble(ChatEntry entry, boolean isSent) {
+        isNewMessageAppended = true;
         String message = isSent ? entry.getFinalPrompt() : entry.getResponse();
         String timestamp = entry.getTimestamp();
 
-        // Using TextFlow for better text wrapping and dynamic height adjustment
-        TextFlow messageTextFlow = new TextFlow(new Text(message));
-        messageTextFlow.setMaxWidth(500);  // Set a maximum width for wrapping
-        messageTextFlow.setPadding(new Insets(10));
-        messageTextFlow.setStyle("-fx-font-family: Arial; -fx-font-size: 14px; -fx-background-radius: 15;");
+        TextFlow messageTextFlow = getMessageTextFlow(message, isSent);
 
         String otherName = entry.getModelName().isBlank() ? "Other" : entry.getModelName();
 
@@ -501,14 +502,12 @@ public class MainController {
         if (isSent) {
             messageMainParent.setAlignment(Pos.CENTER_RIGHT);
 
-            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightblue; -fx-text-fill: black;");
             messageBubble.setOnMouseClicked(event -> onSentMessageBubbleClick(entry));
 
             messageMainParent.getChildren().addAll(dotsHBox, messageBubble);
         } else {
             // For received messages, align the dots to the right of the bubble
             messageMainParent.setAlignment(Pos.CENTER_LEFT);
-            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightgreen; -fx-text-fill: black;");
             messageBubble.setOnMouseClicked(event -> onResponseMessageBubbleClick(entry));
 
             // Add the message bubble to the row
@@ -525,6 +524,21 @@ public class MainController {
 
         // Add the message to the output container
         outputContainer.getChildren().add(messageMainParent);
+        isNewMessageAppended = false;
+    }
+
+    private TextFlow getMessageTextFlow(String message, boolean isSent) {
+        TextFlow messageTextFlow = new TextFlow(new Text(message));
+        messageTextFlow.setMaxWidth(500);  // Set a maximum width for wrapping
+        messageTextFlow.setPadding(new Insets(10));
+        messageTextFlow.setStyle("-fx-font-family: Arial; -fx-font-size: 14px; -fx-background-radius: 15;");
+        if(isSent) {
+            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightblue; -fx-text-fill: black;");
+        } else {
+            messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightgreen; -fx-text-fill: black;");
+        }
+
+        return messageTextFlow;
     }
 
     private ContextMenu currentContextMenu = null;
@@ -540,12 +554,15 @@ public class MainController {
 
         // Create menu items
         MenuItem markdownItem = new MenuItem("Show Markdown");
+        MenuItem plainTextItem = new MenuItem("Show Plain Text");
         MenuItem copyItem = new MenuItem("Copy");
 
         // Set actions for the menu items
         markdownItem.setOnAction(e -> {
-            // Handle Edit action
             showMarkdown(messageBubble, isSent);
+        });
+        plainTextItem.setOnAction(e -> {
+            showPlainText(messageBubble, isSent);
         });
 
         copyItem.setOnAction(e -> {
@@ -557,7 +574,7 @@ public class MainController {
         });
 
         // Add the items to the context menu
-        contextMenu.getItems().addAll(markdownItem, copyItem);
+        contextMenu.getItems().addAll(markdownItem, plainTextItem, copyItem);
 
         // Show the context menu at the location of the mouse click
         contextMenu.show(dotsHBox, event.getScreenX(), event.getScreenY());
@@ -570,6 +587,8 @@ public class MainController {
     private void showMarkdown(VBox bubbleContainer, boolean isSent) {
         // Convert Markdown to HTML using CommonMark
         String message = ((Text) ((TextFlow) bubbleContainer.getChildren().get(1)).getChildren().get(0)).getText();
+        bubbleContainer.setUserData(message);
+
         Parser parser = Parser.builder().build();
         org.commonmark.node.Node document = parser.parse(message);
         HtmlRenderer renderer = HtmlRenderer.builder().build();
@@ -591,6 +610,22 @@ public class MainController {
 
         // Add the styled WebView container to the bubble container
         bubbleContainer.getChildren().add(1, webViewContainer);  // Add in place of the TextFlow
+    }
+
+    private void showPlainText(VBox bubbleContainer, boolean isSent) {
+        // Retrieve the stored plain text from UserData
+        String plainText = (String) bubbleContainer.getUserData();
+
+        if (plainText != null) {
+            // Remove the WebView container from the bubble container
+            bubbleContainer.getChildren().removeIf(node -> node instanceof StackPane && ((StackPane) node).getChildren().get(0) instanceof WebView);
+
+            // Create a new Text node and TextFlow
+            TextFlow textFlow = getMessageTextFlow(plainText, isSent);
+
+            // Add the TextFlow to the bubble container
+            bubbleContainer.getChildren().add(1, textFlow);
+        }
     }
 
     private static @NotNull StackPane getBubbleWebViewContainer(boolean isSent) {
