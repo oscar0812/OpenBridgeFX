@@ -18,10 +18,8 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -35,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +46,19 @@ public class MainController {
     @FXML
     private ScrollPane outputScrollPane;
     @FXML
+    private TabPane promptTabPane;
+    @FXML
+    private Tab promptTab;
+    @FXML
     private TextArea promptTextArea;
+    @FXML
+    private Tab markdownTab;
+    @FXML
+    private WebView markdownWebView;
+    @FXML
+    private Tab curlTab;
+    @FXML
+    private TextArea curlTextArea;
     @FXML
     private VBox parameterContainer;
     @FXML
@@ -72,23 +81,50 @@ public class MainController {
 
     List<ChatData> chatHistory = new ArrayList<>();
 
-    boolean isNewMessageAppended = true;
-
     @FXML
     public void initialize() {
         promptTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
             updateParameters(newValue);
         });
 
+        // Set up a listener for tab selection changes
+        promptTabPane.getSelectionModel().selectedItemProperty()
+                .addListener((observable, oldTab, newTab) -> updateTabContents(newTab));
+
         outputContainer.heightProperty().addListener((observable, oldValue, newValue) -> {
-            if(isNewMessageAppended) {
-                outputScrollPane.setVvalue(1.0);  // Scrolls to the bottom
-            }
+            outputScrollPane.setVvalue(1.0);  // Scrolls to the bottom
         });
 
         setKeyboardShortcuts();
 
         Platform.runLater(this::afterInitialize);
+    }
+
+    private void updateTabContents() {
+        updateTabContents(markdownTab);
+        updateTabContents(curlTab);
+    }
+
+    private void updateTabContents(Tab newTab) {
+        if (newTab != null) {
+            String parsedText = rawToParsedPrompt(promptTextArea.getText());
+            if (newTab.getText().equals(markdownTab.getText())) {
+                // set prompt markdown HTML
+                WebEngine webEngine = markdownWebView.getEngine();
+                webEngine.loadContent(getMarkdownHtml(parsedText)); // Load the converted HTML
+            } else if (newTab.getText().equals(curlTab.getText())) {
+                // set CURL text
+                AIRequestService gptAIRequestService = new AIRequestService(parsedText, yamlData);
+                curlTextArea.setText(gptAIRequestService.getCurlCommand());
+            }
+        }
+    }
+
+    private String getMarkdownHtml(String text) {
+        Parser parser = Parser.builder().build();
+        org.commonmark.node.Node document = parser.parse(text);
+        HtmlRenderer renderer = HtmlRenderer.builder().build();
+        return renderer.render(document);
     }
 
     private void afterInitialize() {
@@ -421,11 +457,7 @@ public class MainController {
         chatEntry.setParameters(parameters);
 
         // Replace placeholders in prompt with parameter values
-        String parsedPrompt = chatEntry.getRawPrompt();
-        for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            String placeholder = "{" + entry.getKey() + "}";
-            parsedPrompt = parsedPrompt.replace(placeholder, entry.getValue());
-        }
+        String parsedPrompt = rawToParsedPrompt(chatEntry.getRawPrompt());
 
         chatEntry.setFinalPrompt(parsedPrompt);
         chatEntry.setPromptInfo(aiTokenService.getPromptInfo(parsedPrompt));
@@ -435,6 +467,15 @@ public class MainController {
         // Create and start the GPT API service
         AIRequestService gptAIRequestService = getAiRequestService(chatEntry);
         gptAIRequestService.start(); // Start the service
+    }
+
+    private String rawToParsedPrompt(String prompt) {
+        Map<String, String> parameters = getCurrentParameters();
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
+            String placeholder = "{" + entry.getKey() + "}";
+            prompt = prompt.replace(placeholder, entry.getValue());
+        }
+        return prompt;
     }
 
     private @NotNull AIRequestService getAiRequestService(ChatEntry chatEntry) {
@@ -462,7 +503,6 @@ public class MainController {
     }
 
     private void addMessageBubble(ChatEntry entry, boolean isSent) {
-        isNewMessageAppended = true;
         String message = isSent ? entry.getFinalPrompt() : entry.getResponse();
         String timestamp = entry.getTimestamp();
 
@@ -481,17 +521,6 @@ public class MainController {
         bottomLabel.setTextFill(Color.GRAY);
         bottomLabel.setFont(new Font("Arial", 12));
 
-        HBox dotsHBox = new HBox(2);
-        dotsHBox.setSpacing(2);
-
-        Circle dot1 = new Circle(3, Color.GRAY);
-        Circle dot2 = new Circle(3, Color.GRAY);
-        Circle dot3 = new Circle(3, Color.GRAY);
-
-        dotsHBox.getChildren().addAll(dot1, dot2, dot3);
-        dotsHBox.setPadding(new Insets(25, 0, 0, 0));
-        dotsHBox.setCursor(javafx.scene.Cursor.HAND);
-
         VBox messageBubble = new VBox(5);
         messageBubble.getChildren().addAll(senderLabel, messageTextFlow, bottomLabel);
         messageBubble.setCursor(javafx.scene.Cursor.HAND);
@@ -504,7 +533,7 @@ public class MainController {
 
             messageBubble.setOnMouseClicked(event -> onSentMessageBubbleClick(entry));
 
-            messageMainParent.getChildren().addAll(dotsHBox, messageBubble);
+            messageMainParent.getChildren().addAll(messageBubble);
         } else {
             // For received messages, align the dots to the right of the bubble
             messageMainParent.setAlignment(Pos.CENTER_LEFT);
@@ -512,19 +541,14 @@ public class MainController {
 
             // Add the message bubble to the row
             messageMainParent.getChildren().add(messageBubble);
-
-            messageMainParent.getChildren().add(dotsHBox); // Now the dots will appear to the right of the message bubble
         }
 
         // Ensure dynamic height adjustments are allowed
         messageMainParent.setPrefHeight(Region.USE_COMPUTED_SIZE);
         messageBubble.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
-        dotsHBox.setOnMouseClicked(event -> onDotsClick(event, dotsHBox, messageBubble, entry, isSent));
-
         // Add the message to the output container
         outputContainer.getChildren().add(messageMainParent);
-        isNewMessageAppended = false;
     }
 
     private TextFlow getMessageTextFlow(String message, boolean isSent) {
@@ -532,7 +556,7 @@ public class MainController {
         messageTextFlow.setMaxWidth(500);  // Set a maximum width for wrapping
         messageTextFlow.setPadding(new Insets(10));
         messageTextFlow.setStyle("-fx-font-family: Arial; -fx-font-size: 14px; -fx-background-radius: 15;");
-        if(isSent) {
+        if (isSent) {
             messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightblue; -fx-text-fill: black;");
         } else {
             messageTextFlow.setStyle(messageTextFlow.getStyle() + "-fx-background-color: lightgreen; -fx-text-fill: black;");
@@ -541,112 +565,13 @@ public class MainController {
         return messageTextFlow;
     }
 
-    private ContextMenu currentContextMenu = null;
-
-    private void onDotsClick(MouseEvent event, HBox dotsHBox, VBox messageBubble, ChatEntry data, boolean isSent) {
-        // If there's already a menu showing, hide it
-        if (currentContextMenu != null && currentContextMenu.isShowing()) {
-            currentContextMenu.hide();
-        }
-
-        // Create the context menu
-        ContextMenu contextMenu = new ContextMenu();
-
-        // Create menu items
-        MenuItem markdownItem = new MenuItem("Show Markdown");
-        MenuItem plainTextItem = new MenuItem("Show Plain Text");
-        MenuItem copyItem = new MenuItem("Copy");
-
-        // Set actions for the menu items
-        markdownItem.setOnAction(e -> {
-            showMarkdown(messageBubble, isSent);
-        });
-        plainTextItem.setOnAction(e -> {
-            showPlainText(messageBubble, isSent);
-        });
-
-        copyItem.setOnAction(e -> {
-            if (isSent) {
-                onSentMessageBubbleClick(data);
-            } else {
-                onResponseMessageBubbleClick(data);
-            }
-        });
-
-        // Add the items to the context menu
-        contextMenu.getItems().addAll(markdownItem, plainTextItem, copyItem);
-
-        // Show the context menu at the location of the mouse click
-        contextMenu.show(dotsHBox, event.getScreenX(), event.getScreenY());
-
-        // Update the current context menu to the newly shown menu
-        currentContextMenu = contextMenu;
-    }
-
-    // Method to handle the first option click and display Markdown as HTML in WebView
-    private void showMarkdown(VBox bubbleContainer, boolean isSent) {
-        // Convert Markdown to HTML using CommonMark
-        String message = ((Text) ((TextFlow) bubbleContainer.getChildren().get(1)).getChildren().get(0)).getText();
-        bubbleContainer.setUserData(message);
-
-        Parser parser = Parser.builder().build();
-        org.commonmark.node.Node document = parser.parse(message);
-        HtmlRenderer renderer = HtmlRenderer.builder().build();
-        String htmlContent = renderer.render(document);
-
-        // Remove existing TextFlow from the bubble container
-        bubbleContainer.getChildren().removeIf(node -> node instanceof TextFlow);
-
-        // Create a StackPane to hold the WebView with the bubble's styling
-        StackPane webViewContainer = getBubbleWebViewContainer(isSent);
-
-        // Create a WebView and load the HTML content
-        WebView webView = new WebView();
-        WebEngine webEngine = webView.getEngine();
-        webEngine.loadContent(htmlContent); // Load the converted HTML
-
-        // Add the WebView to the styled container
-        webViewContainer.getChildren().add(webView);
-
-        // Add the styled WebView container to the bubble container
-        bubbleContainer.getChildren().add(1, webViewContainer);  // Add in place of the TextFlow
-    }
-
-    private void showPlainText(VBox bubbleContainer, boolean isSent) {
-        // Retrieve the stored plain text from UserData
-        String plainText = (String) bubbleContainer.getUserData();
-
-        if (plainText != null) {
-            // Remove the WebView container from the bubble container
-            bubbleContainer.getChildren().removeIf(node -> node instanceof StackPane && ((StackPane) node).getChildren().get(0) instanceof WebView);
-
-            // Create a new Text node and TextFlow
-            TextFlow textFlow = getMessageTextFlow(plainText, isSent);
-
-            // Add the TextFlow to the bubble container
-            bubbleContainer.getChildren().add(1, textFlow);
-        }
-    }
-
-    private static @NotNull StackPane getBubbleWebViewContainer(boolean isSent) {
-        StackPane webViewContainer = new StackPane();
-        webViewContainer.setMaxWidth(500); // Match the original width
-        webViewContainer.setPadding(new Insets(10));
-
-        // Apply bubble styling
-        String bubbleStyle = isSent
-                ? "-fx-background-color: lightblue; -fx-background-radius: 15; -fx-padding: 10;"
-                : "-fx-background-color: lightgreen; -fx-background-radius: 15; -fx-padding: 10;";
-        webViewContainer.setStyle(bubbleStyle);
-        return webViewContainer;
-    }
-
     private void clearMessageBubbles() {
         outputContainer.getChildren().clear();
     }
 
     private void onSentMessageBubbleClick(ChatEntry data) {
         promptTextArea.setText(data.getRawPrompt()); // will trigger updateParameters()
+        updateTabContents();
 
         for (Node node : parameterContainer.getChildren()) {
             if (node instanceof VBox parameterSet) {
@@ -671,6 +596,7 @@ public class MainController {
 
     private void onResponseMessageBubbleClick(ChatEntry data) {
         promptTextArea.setText(data.getResponse()); // will trigger updateParameters()
+        updateTabContents();
 
         copyTextToClipboard(data.getResponse());
 

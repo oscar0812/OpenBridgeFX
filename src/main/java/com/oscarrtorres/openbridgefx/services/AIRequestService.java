@@ -78,6 +78,45 @@ public class AIRequestService extends Service<String> {
         return connection;
     }
 
+    public String getCurlCommand() {
+        String apiUrl = yamlData.getChatGpt().getApiUrl();
+        String apiKey = yamlData.getChatGpt().getApiKey();
+        JSONObject requestBody = getRequestBody();
+
+        // Convert the JSON string and escape single quotes for the cURL command
+        String requestBodyString = requestBody.toString().replace("'", "'\\''");
+
+        // Construct the cURL command
+
+        return "curl -X POST " +
+                "'" + apiUrl + "' " +
+                "-H 'Authorization: Bearer " + apiKey + "' " +
+                "-H 'Content-Type: application/json' " +
+                "-d '" + requestBodyString + "'";
+    }
+
+    private @NotNull JSONObject getRequestBody() {
+        String model = yamlData.getChatGpt().getModel();
+
+        // Escape special characters in the prompt for JSON
+        String safePrompt = prompt.replace("\"", "\\\""); // Escape double quotes
+
+        // Create a JSON object for the request body
+        JSONObject requestBody = new JSONObject();
+        requestBody.put("model", model);
+
+        // Create the messages array
+        JSONArray messages = new JSONArray();
+        JSONObject message = new JSONObject();
+        message.put("role", "user");
+        message.put("content", safePrompt);
+        messages.put(message);
+
+        requestBody.put("messages", messages);
+        return requestBody;
+    }
+
+
     private String parseGptResponse(String jsonResponse) {
         // Parse the JSON response
         JSONObject jsonObject = new JSONObject(jsonResponse);

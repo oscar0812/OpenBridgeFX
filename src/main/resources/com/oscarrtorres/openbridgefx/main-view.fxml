@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.oscarrtorres.openbridgefx.MainController">
 
@@ -33,8 +34,32 @@
                 <padding>
                     <Insets top="10.0" right="10.0" bottom="10.0" left="10.0"/>
                 </padding>
-                <Label text="Prompt" alignment="CENTER_LEFT"/>
-                <TextArea fx:id="promptTextArea" wrapText="true" promptText="Enter your prompt here..." prefHeight="400.0"/>
+
+                <TabPane fx:id="promptTabPane">
+                    <tabs>
+                        <!-- Tab 1: Prompt -->
+                        <Tab text="Prompt" fx:id="promptTab">
+                            <VBox spacing="10.0">
+                                <TextArea fx:id="promptTextArea" wrapText="true" promptText="Enter your prompt here..." prefHeight="400.0"/>
+                            </VBox>
+                        </Tab>
+
+                        <!-- Tab 2: Web View -->
+                        <Tab text="Markdown" fx:id="markdownTab">
+                            <VBox spacing="10.0">
+                                <WebView fx:id="markdownWebView" prefHeight="400.0"/>
+                            </VBox>
+                        </Tab>
+
+                        <!-- Tab 3: Parameter Info -->
+                        <Tab text="CURL"  fx:id="curlTab">
+                            <VBox spacing="10.0">
+                                <TextArea fx:id="curlTextArea" wrapText="true" prefHeight="400.0" editable="false"/>
+                            </VBox>
+                        </Tab>
+                    </tabs>
+                </TabPane>
+
                 <ScrollPane fx:id="parameterScrollPane" fitToWidth="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" managed="false">
                     <VBox fx:id="parameterContainer" spacing="10.0" style="-fx-background-color: transparent;"/>
                 </ScrollPane>
