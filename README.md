@@ -1,6 +1,6 @@
-# OpenBridgeFX
+# OpenModelFX
 
-OpenBridgeFX is a JavaFX application that allows users to interact with a conversational AI system. Users can load past conversations, send prompts with dynamic parameters, and view chat-style responses.
+OpenModelFX is a JavaFX application that allows users to interact with a conversational AI system. Users can load past conversations, send prompts with dynamic parameters, and view chat-style responses.
 
 ## Features
 

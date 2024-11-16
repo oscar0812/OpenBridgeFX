@@ -1,13 +1,13 @@
-package com.oscarrtorres.openbridgefx.services;
+package com.oscarrtorres.openmodelfx.services;
 
-import com.oscarrtorres.openbridgefx.MainController;
-import com.oscarrtorres.openbridgefx.dialogs.VoskModelDialog;
-import com.oscarrtorres.openbridgefx.models.Constants;
-import com.oscarrtorres.openbridgefx.models.SpeechToTextData;
-import com.oscarrtorres.openbridgefx.models.VoskModel;
-import com.oscarrtorres.openbridgefx.models.YamlData;
-import com.oscarrtorres.openbridgefx.utils.FileUtils;
-import com.oscarrtorres.openbridgefx.utils.Toast;
+import com.oscarrtorres.openmodelfx.MainController;
+import com.oscarrtorres.openmodelfx.dialogs.VoskModelDialog;
+import com.oscarrtorres.openmodelfx.models.Constants;
+import com.oscarrtorres.openmodelfx.models.SpeechToTextData;
+import com.oscarrtorres.openmodelfx.models.VoskModel;
+import com.oscarrtorres.openmodelfx.models.YamlData;
+import com.oscarrtorres.openmodelfx.utils.FileUtils;
+import com.oscarrtorres.openmodelfx.utils.Toast;
 import javafx.concurrent.Task;
 import javafx.scene.control.TextArea;
 import lombok.Data;

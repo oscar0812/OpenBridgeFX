@@ -1,4 +1,4 @@
-package com.oscarrtorres.openbridgefx.utils;
+package com.oscarrtorres.openmodelfx.utils;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;

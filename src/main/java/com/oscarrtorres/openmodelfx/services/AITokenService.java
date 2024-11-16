@@ -1,11 +1,11 @@
-package com.oscarrtorres.openbridgefx.services;
+package com.oscarrtorres.openmodelfx.services;
 
 import com.knuddels.jtokkit.Encodings;
 import com.knuddels.jtokkit.api.Encoding;
 import com.knuddels.jtokkit.api.EncodingRegistry;
 import com.knuddels.jtokkit.api.ModelType;
-import com.oscarrtorres.openbridgefx.models.ModelPricing;
-import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
+import com.oscarrtorres.openmodelfx.models.ModelPricing;
+import com.oscarrtorres.openmodelfx.models.TokenCostInfo;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;

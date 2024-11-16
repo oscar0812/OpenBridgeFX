@@ -1,4 +1,4 @@
-package com.oscarrtorres.openbridgefx.models;
+package com.oscarrtorres.openmodelfx.models;
 
 import com.knuddels.jtokkit.api.ModelType;
 import lombok.Data;

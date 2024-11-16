@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.web.WebView?>
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.oscarrtorres.openbridgefx.MainController">
+      fx:controller="com.oscarrtorres.openmodelfx.MainController">
 
     <!-- Top Menu Bar -->
     <MenuBar>

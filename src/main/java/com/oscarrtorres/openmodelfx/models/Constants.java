@@ -1,4 +1,4 @@
-package com.oscarrtorres.openbridgefx.models;
+package com.oscarrtorres.openmodelfx.models;
 
 import java.io.File;
 

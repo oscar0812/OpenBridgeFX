@@ -1,4 +1,4 @@
-package com.oscarrtorres.openbridgefx.models;
+package com.oscarrtorres.openmodelfx.models;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

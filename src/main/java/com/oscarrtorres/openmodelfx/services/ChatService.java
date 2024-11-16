@@ -1,9 +1,9 @@
-package com.oscarrtorres.openbridgefx.services;
+package com.oscarrtorres.openmodelfx.services;
 
-import com.oscarrtorres.openbridgefx.models.ChatData;
-import com.oscarrtorres.openbridgefx.models.ChatEntry;
-import com.oscarrtorres.openbridgefx.models.Constants;
-import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
+import com.oscarrtorres.openmodelfx.models.ChatData;
+import com.oscarrtorres.openmodelfx.models.ChatEntry;
+import com.oscarrtorres.openmodelfx.models.Constants;
+import com.oscarrtorres.openmodelfx.models.TokenCostInfo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Data;

@@ -1,6 +1,6 @@
-package com.oscarrtorres.openbridgefx.services;
+package com.oscarrtorres.openmodelfx.services;
 
-import com.oscarrtorres.openbridgefx.models.YamlData;
+import com.oscarrtorres.openmodelfx.models.YamlData;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import lombok.AllArgsConstructor;

@@ -1,9 +1,9 @@
-package com.oscarrtorres.openbridgefx.dialogs;
+package com.oscarrtorres.openmodelfx.dialogs;
 
-import com.oscarrtorres.openbridgefx.MainController;
-import com.oscarrtorres.openbridgefx.models.YamlData;
-import com.oscarrtorres.openbridgefx.utils.FileUtils;
-import com.oscarrtorres.openbridgefx.utils.Toast;
+import com.oscarrtorres.openmodelfx.MainController;
+import com.oscarrtorres.openmodelfx.models.YamlData;
+import com.oscarrtorres.openmodelfx.utils.FileUtils;
+import com.oscarrtorres.openmodelfx.utils.Toast;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;

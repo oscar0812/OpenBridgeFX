@@ -1,4 +1,4 @@
-module com.oscarrtorres.openbridgefx {
+module com.oscarrtorres.openmodelfx {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
@@ -20,15 +20,15 @@ module com.oscarrtorres.openbridgefx {
     requires annotations;
     requires lombok;
 
-    opens com.oscarrtorres.openbridgefx to javafx.fxml;
-    exports com.oscarrtorres.openbridgefx;
+    opens com.oscarrtorres.openmodelfx to javafx.fxml;
+    exports com.oscarrtorres.openmodelfx;
 
-    exports com.oscarrtorres.openbridgefx.dialogs;
-    opens com.oscarrtorres.openbridgefx.dialogs to javafx.fxml;
-    exports com.oscarrtorres.openbridgefx.models;
-    opens com.oscarrtorres.openbridgefx.models to javafx.fxml;
-    exports com.oscarrtorres.openbridgefx.services;
-    opens com.oscarrtorres.openbridgefx.services to javafx.fxml;
-    exports com.oscarrtorres.openbridgefx.utils;
-    opens com.oscarrtorres.openbridgefx.utils to javafx.fxml;
+    exports com.oscarrtorres.openmodelfx.dialogs;
+    opens com.oscarrtorres.openmodelfx.dialogs to javafx.fxml;
+    exports com.oscarrtorres.openmodelfx.models;
+    opens com.oscarrtorres.openmodelfx.models to javafx.fxml;
+    exports com.oscarrtorres.openmodelfx.services;
+    opens com.oscarrtorres.openmodelfx.services to javafx.fxml;
+    exports com.oscarrtorres.openmodelfx.utils;
+    opens com.oscarrtorres.openmodelfx.utils to javafx.fxml;
 }

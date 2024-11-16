@@ -1,8 +1,8 @@
-package com.oscarrtorres.openbridgefx.utils;
+package com.oscarrtorres.openmodelfx.utils;
 
-import com.oscarrtorres.openbridgefx.models.ChatData;
-import com.oscarrtorres.openbridgefx.models.Constants;
-import com.oscarrtorres.openbridgefx.models.YamlData;
+import com.oscarrtorres.openmodelfx.models.ChatData;
+import com.oscarrtorres.openmodelfx.models.Constants;
+import com.oscarrtorres.openmodelfx.models.YamlData;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;

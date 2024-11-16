@@ -1,7 +1,7 @@
-package com.oscarrtorres.openbridgefx.services;
+package com.oscarrtorres.openmodelfx.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oscarrtorres.openbridgefx.models.SpeechToTextData;
+import com.oscarrtorres.openmodelfx.models.SpeechToTextData;
 import javafx.application.Platform;
 import javafx.scene.control.TextArea;
 import lombok.Data;
