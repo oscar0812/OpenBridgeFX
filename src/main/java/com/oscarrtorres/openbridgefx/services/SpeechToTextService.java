@@ -16,6 +16,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.vosk.LogLevel;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 
@@ -43,7 +44,7 @@ public class SpeechToTextService {
             this.controller.showVoskModelDialog();
             return;
         } else if (!speechToTextData.isLoaded()) {
-            Toast.makeText("The speech model is still loading...");
+            Toast.makeText("The speech model is loading...");
             return;
         }
 
@@ -121,7 +122,7 @@ public class SpeechToTextService {
         new Thread(loadDataTask).start();
     }
 
-    public void loadModel() {
+    private void loadModel() {
         try {
             Model model = new Model(this.speechToTextData.getModelPath());
             Recognizer recognizer = new Recognizer(model, 16000);
@@ -140,6 +141,7 @@ public class SpeechToTextService {
         Task<Void> loadDataTask = new Task<>() {
             @Override
             protected Void call() {
+                org.vosk.LibVosk.setLogLevel(LogLevel.WARNINGS);
                 SpeechToTextData speechToTextData1 = service.getSpeechToTextData();
                 // Perform the model loading in the background thread
                 if (!Objects.isNull(speechToTextData1) && voskModelName.equals(speechToTextData1.getModelName())) {
@@ -154,11 +156,12 @@ public class SpeechToTextService {
 
             @Override
             protected void succeeded() {
-                System.out.println("Speech model loaded successfully.");
+                Toast.makeText("Speech model loaded successfully.");
             }
 
             @Override
             protected void failed() {
+                Toast.makeText("Speech model failed to load.");
                 controller.showVoskModelDialog();
             }
         };

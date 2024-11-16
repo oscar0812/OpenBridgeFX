@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 
-import java.io.IOException;
 import java.util.Objects;
 
 @Data

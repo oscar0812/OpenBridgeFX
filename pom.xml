@@ -12,21 +12,22 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
-        <junit.version>5.9.1</junit.version>
-        <javafx.version>17.0.2</javafx.version>
-        <controlsfx.version>11.1.2</controlsfx.version>
+        <junit.version>5.11.3</junit.version>
+        <javafx.version>23.0.1</javafx.version>
+        <controlsfx.version>11.2.1</controlsfx.version>
         <commonmark.version>0.24.0</commonmark.version>
         <json.version>20240303</json.version>
         <vosk.version>0.3.38</vosk.version>
         <snakeyaml.version>2.3</snakeyaml.version>
-        <formsfx.version>11.5.0</formsfx.version>
-        <validatorfx.version>0.4.0</validatorfx.version>
+        <formsfx.version>11.6.0</formsfx.version>
+        <validatorfx.version>0.5.1</validatorfx.version>
         <ikonli.version>12.3.1</ikonli.version>
         <bootstrapfx.version>0.4.0</bootstrapfx.version>
-        <tilesfx.version>17.1.15</tilesfx.version>
-        <fxgl.version>17.2</fxgl.version>
+        <tilesfx.version>21.0.9</tilesfx.version>
+        <fxgl.version>21.1</fxgl.version>
         <lombok.version>1.18.34</lombok.version>
-        <maven.compiler.plugin.version>3.10.1</maven.compiler.plugin.version>
+        <jsoup.version>1.18.1</jsoup.version>
+        <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
         <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
     </properties>
 
@@ -35,29 +36,6 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-graphics</artifactId>
             <version>${javafx.version}</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>${javafx.version}</version>
-            <classifier>linux</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>${javafx.version}</version>
-            <classifier>mac</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.18.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alphacephei</groupId>
-            <artifactId>vosk</artifactId>
-            <version>${vosk.version}</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -103,6 +81,16 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alphacephei</groupId>
+            <artifactId>vosk</artifactId>
+            <version>${vosk.version}</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
