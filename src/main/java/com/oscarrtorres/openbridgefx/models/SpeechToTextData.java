@@ -1,11 +1,17 @@
 package com.oscarrtorres.openbridgefx.models;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 
 import java.io.IOException;
 import java.util.Objects;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class SpeechToTextData {
     private String modelPath;
     private String modelName;
@@ -15,48 +21,6 @@ public class SpeechToTextData {
     public SpeechToTextData(String modelPath) {
         this.modelPath = modelPath;
         this.modelName = modelPath.substring(modelPath.lastIndexOf('/') + 1);
-    }
-
-    public void loadModel() {
-        try {
-            this.model = new Model(modelPath);
-            this.recognizer = new Recognizer(model, 16000);
-            this.recognizer.setPartialWords(false);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public String getModelPath() {
-        return modelPath;
-    }
-
-    public void setModelPath(String modelPath) {
-        this.modelPath = modelPath;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public Model getModel() {
-        return model;
-    }
-
-    public void setModel(Model model) {
-        this.model = model;
-    }
-
-    public Recognizer getRecognizer() {
-        return recognizer;
-    }
-
-    public void setRecognizer(Recognizer recognizer) {
-        this.recognizer = recognizer;
     }
 
     public boolean isLoaded() {

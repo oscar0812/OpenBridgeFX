@@ -15,11 +15,8 @@ import java.util.Map;
 public class AITokenService {
     private Map<ModelType, ModelPricing> modelPricingMap = new HashMap<>();
     private ModelType modelType;
-    EncodingRegistry registry = Encodings.newDefaultEncodingRegistry();
-    Encoding encoding;
-
-    public AITokenService() {
-    }
+    private final EncodingRegistry registry = Encodings.newDefaultEncodingRegistry();
+    private Encoding encoding;
 
     public LinkedHashMap<ModelType, ModelPricing> getDefaultModelPricingMap() {
         LinkedHashMap<ModelType, ModelPricing> map = new LinkedHashMap<>();

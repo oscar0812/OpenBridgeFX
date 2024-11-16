@@ -5,12 +5,14 @@ import com.oscarrtorres.openbridgefx.models.Constants;
 import com.oscarrtorres.openbridgefx.models.VoskModel;
 import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.utils.FileUtils;
+import com.oscarrtorres.openbridgefx.utils.Toast;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
+import lombok.AllArgsConstructor;
 
 import java.io.File;
 import java.io.InputStream;
@@ -22,15 +24,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Objects;
 
+@AllArgsConstructor
 public class VoskModelDialog {
 
     private final MainController controller;
     private final YamlData yamlData;
-
-    public VoskModelDialog(MainController controller, YamlData yamlData) {
-        this.controller = controller;
-        this.yamlData = yamlData;
-    }
 
     public void showDialog() {
         // Create an alert dialog with a custom content
@@ -161,7 +159,7 @@ public class VoskModelDialog {
         progressBar.setVisible(true);
 
         downloadTask.setOnSucceeded(event -> {
-            controller.showInfoAlert("Download completed for: " + modelNameText);
+            Toast.makeText("Download completed for: " + modelNameText);
             downloadButton.setText("Download Again");
             progressBar.setVisible(false);
             radioButton.setDisable(false);
@@ -174,7 +172,7 @@ public class VoskModelDialog {
             if (exception != null) {
                 exception.printStackTrace();
             }
-            controller.showErrorAlert("Download failed for: " + modelNameText);
+            Toast.makeText("Download failed for: " + modelNameText);
             progressBar.setVisible(false);
             downloadButton.setDisable(false);
             okButton.setDisable(false);

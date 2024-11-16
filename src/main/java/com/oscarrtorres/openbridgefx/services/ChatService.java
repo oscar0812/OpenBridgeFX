@@ -6,6 +6,7 @@ import com.oscarrtorres.openbridgefx.models.Constants;
 import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import lombok.Data;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -20,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Data
 public class ChatService {
 
     private ChatData currentChatData;
@@ -38,14 +40,6 @@ public class ChatService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public void setCurrentChatData(ChatData chatData) {
-        this.currentChatData = chatData;
-    }
-
-    public ChatData getCurrentChatData() {
-        return currentChatData;
     }
 
     public void saveChatData() {

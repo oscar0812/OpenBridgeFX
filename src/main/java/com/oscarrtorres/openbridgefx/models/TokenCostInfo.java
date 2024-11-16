@@ -1,29 +1,15 @@
 package com.oscarrtorres.openbridgefx.models;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TokenCostInfo {
     int tokenCount;
     double totalCost;
-
-    public TokenCostInfo(int tokenCount, double totalCost) {
-        this.tokenCount = tokenCount;
-        this.totalCost = totalCost;
-    }
-
-    public void setTokenCount(int tokenCount) {
-        this.tokenCount = tokenCount;
-    }
-
-    public int getTokenCount() {
-        return tokenCount;
-    }
-
-    public void setTotalCost(double totalCost) {
-        this.totalCost = totalCost;
-    }
-
-    public double getTotalCost() {
-        return totalCost;
-    }
 
     @Override
     public String toString() {

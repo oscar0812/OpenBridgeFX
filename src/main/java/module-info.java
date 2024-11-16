@@ -18,6 +18,7 @@ module com.oscarrtorres.openbridgefx {
     requires vosk;
     requires com.fasterxml.jackson.databind;
     requires annotations;
+    requires lombok;
 
     opens com.oscarrtorres.openbridgefx to javafx.fxml;
     exports com.oscarrtorres.openbridgefx;

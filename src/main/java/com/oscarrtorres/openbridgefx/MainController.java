@@ -2,7 +2,10 @@ package com.oscarrtorres.openbridgefx;
 
 import com.knuddels.jtokkit.api.ModelType;
 import com.oscarrtorres.openbridgefx.dialogs.ApiPropertiesDialog;
-import com.oscarrtorres.openbridgefx.models.*;
+import com.oscarrtorres.openbridgefx.models.ChatData;
+import com.oscarrtorres.openbridgefx.models.ChatEntry;
+import com.oscarrtorres.openbridgefx.models.TokenCostInfo;
+import com.oscarrtorres.openbridgefx.models.YamlData;
 import com.oscarrtorres.openbridgefx.services.AIRequestService;
 import com.oscarrtorres.openbridgefx.services.AITokenService;
 import com.oscarrtorres.openbridgefx.services.ChatService;
@@ -60,6 +63,10 @@ public class MainController {
     @FXML
     private TextArea curlTextArea;
     @FXML
+    private Tab powerShellTab;
+    @FXML
+    private TextArea powerShellTextArea;
+    @FXML
     private VBox parameterContainer;
     @FXML
     private ScrollPane parameterScrollPane;
@@ -103,6 +110,7 @@ public class MainController {
     private void updateTabContents() {
         updateTabContents(markdownTab);
         updateTabContents(curlTab);
+        updateTabContents(powerShellTab);
     }
 
     private void updateTabContents(Tab newTab) {
@@ -114,8 +122,12 @@ public class MainController {
                 webEngine.loadContent(getMarkdownHtml(parsedText)); // Load the converted HTML
             } else if (newTab.getText().equals(curlTab.getText())) {
                 // set CURL text
-                AIRequestService gptAIRequestService = new AIRequestService(parsedText, yamlData);
+                AIRequestService gptAIRequestService = new AIRequestService(yamlData, parsedText);
                 curlTextArea.setText(gptAIRequestService.getCurlCommand());
+            } else if (newTab.getText().equals(powerShellTab.getText())) {
+                // set PowerShell text
+                AIRequestService gptAIRequestService = new AIRequestService(yamlData, parsedText);
+                powerShellTextArea.setText(gptAIRequestService.getPowerShellCurlCommand());
             }
         }
     }
@@ -153,18 +165,6 @@ public class MainController {
 
     public SpeechToTextService getSpeechToTextService() {
         return speechToTextService;
-    }
-
-    public ScrollPane getOutputScrollPane() {
-        return outputScrollPane;
-    }
-
-    public void showInfoAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Information");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 
     private void setChatHistory() {
@@ -311,14 +311,6 @@ public class MainController {
     @FXML
     public void showVoskModelDialog() {
         speechToTextService.showVoskModelDialog(yamlData);
-    }
-
-    public void showErrorAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("An error occurred");
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 
     private void onChatHistoryClick(ChatData chatData) {
@@ -479,7 +471,7 @@ public class MainController {
     }
 
     private @NotNull AIRequestService getAiRequestService(ChatEntry chatEntry) {
-        AIRequestService gptAIRequestService = new AIRequestService(chatEntry.getFinalPrompt(), yamlData);
+        AIRequestService gptAIRequestService = new AIRequestService(yamlData, chatEntry.getFinalPrompt());
 
         gptAIRequestService.setOnSucceeded(event -> {
             String gptResponse = gptAIRequestService.getValue();

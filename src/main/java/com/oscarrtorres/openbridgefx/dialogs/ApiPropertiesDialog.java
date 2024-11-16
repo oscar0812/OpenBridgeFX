@@ -7,19 +7,16 @@ import com.oscarrtorres.openbridgefx.utils.Toast;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import lombok.AllArgsConstructor;
 
 import java.util.Objects;
 import java.util.Optional;
 
+@AllArgsConstructor
 public class ApiPropertiesDialog {
 
     private final MainController controller; // Reference to the MainController
     private final YamlData yamlData;
-
-    public ApiPropertiesDialog(MainController controller, YamlData yamlData) {
-        this.controller = controller;
-        this.yamlData = yamlData;
-    }
 
     public void showDialog() {
         Alert alert = new Alert(Alert.AlertType.WARNING);

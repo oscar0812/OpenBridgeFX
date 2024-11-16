@@ -38,23 +38,28 @@
                 <TabPane fx:id="promptTabPane">
                     <tabs>
                         <!-- Tab 1: Prompt -->
-                        <Tab text="Prompt" fx:id="promptTab">
+                        <Tab text="Prompt" fx:id="promptTab" closable="false">
                             <VBox spacing="10.0">
                                 <TextArea fx:id="promptTextArea" wrapText="true" promptText="Enter your prompt here..." prefHeight="400.0"/>
                             </VBox>
                         </Tab>
 
                         <!-- Tab 2: Web View -->
-                        <Tab text="Markdown" fx:id="markdownTab">
+                        <Tab text="Markdown" fx:id="markdownTab" closable="false">
                             <VBox spacing="10.0">
                                 <WebView fx:id="markdownWebView" prefHeight="400.0"/>
                             </VBox>
                         </Tab>
 
                         <!-- Tab 3: Parameter Info -->
-                        <Tab text="CURL"  fx:id="curlTab">
+                        <Tab text="CURL"  fx:id="curlTab" closable="false">
                             <VBox spacing="10.0">
                                 <TextArea fx:id="curlTextArea" wrapText="true" prefHeight="400.0" editable="false"/>
+                            </VBox>
+                        </Tab>
+                        <Tab text="PowerShell"  fx:id="powerShellTab" closable="false">
+                            <VBox spacing="10.0">
+                                <TextArea fx:id="powerShellTextArea" wrapText="true" prefHeight="400.0" editable="false"/>
                             </VBox>
                         </Tab>
                     </tabs>

@@ -3,6 +3,7 @@ package com.oscarrtorres.openbridgefx.services;
 import com.oscarrtorres.openbridgefx.models.YamlData;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,15 +14,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+@AllArgsConstructor
 public class AIRequestService extends Service<String> {
 
     private final YamlData yamlData;
     private final String prompt;
-
-    public AIRequestService(String prompt, YamlData yamlData) {
-        this.yamlData = yamlData;
-        this.prompt = prompt;
-    }
 
     @Override
     protected Task<String> createTask() {
@@ -114,6 +111,23 @@ public class AIRequestService extends Service<String> {
 
         requestBody.put("messages", messages);
         return requestBody;
+    }
+
+    public String getPowerShellCurlCommand() {
+        String apiUrl = yamlData.getChatGpt().getApiUrl();
+        String apiKey = yamlData.getChatGpt().getApiKey();
+        JSONObject requestBody = getRequestBody(); // Assuming this method creates the correct request body
+
+        // Convert the JSON object to a string and escape necessary characters for PowerShell
+        String requestBodyString = requestBody.toString()
+                .replace("'", "''"); // Double up single quotes for PowerShell escaping
+
+        // Construct the PowerShell command as a single line with response output
+
+        return "$headers = @{'Authorization'='Bearer " + apiKey + "'; 'Content-Type'='application/json'}; " +
+                "$body = '" + requestBodyString + "'; " +
+                "$response = Invoke-RestMethod -Uri '" + apiUrl + "' -Method Post -Headers $headers -Body $body; " +
+                "$response | ConvertTo-Json -Depth 10";
     }
 
 

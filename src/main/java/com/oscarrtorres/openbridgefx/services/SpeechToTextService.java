@@ -10,11 +10,14 @@ import com.oscarrtorres.openbridgefx.utils.FileUtils;
 import com.oscarrtorres.openbridgefx.utils.Toast;
 import javafx.concurrent.Task;
 import javafx.scene.control.TextArea;
+import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.vosk.Model;
+import org.vosk.Recognizer;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,32 +25,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Data
 public class SpeechToTextService {
     private MainController controller;
     private SpeechToTextData speechToTextData;
     private SpeechToTextRecordingThread speechToTextRecordingThread;
     private Thread speechThread;
     private boolean isRecording;
-
-    public SpeechToTextService() {
-
-    }
-
-    public void setController(MainController controller) {
-        this.controller = controller;
-    }
-
-    public SpeechToTextData getSpeechRecognizerData() {
-        return speechToTextData;
-    }
-
-    public void setSpeechRecognizerData(SpeechToTextData speechToTextData) {
-        this.speechToTextData = speechToTextData;
-    }
-
-    public boolean isRecording() {
-        return isRecording;
-    }
 
     public void showVoskModelDialog(YamlData yamlData) {
         VoskModelDialog voskModelDialog = new VoskModelDialog(this.controller, yamlData);
@@ -137,21 +121,34 @@ public class SpeechToTextService {
         new Thread(loadDataTask).start();
     }
 
+    public void loadModel() {
+        try {
+            Model model = new Model(this.speechToTextData.getModelPath());
+            Recognizer recognizer = new Recognizer(model, 16000);
+            recognizer.setPartialWords(false);
+
+            this.speechToTextData.setModel(model);
+            this.speechToTextData.setRecognizer(recognizer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void loadModel(@NotNull String voskModelName) {
         SpeechToTextService service = this;
 
         Task<Void> loadDataTask = new Task<>() {
-            SpeechToTextData speechRecognizerData = service.getSpeechRecognizerData();
             @Override
             protected Void call() {
+                SpeechToTextData speechToTextData1 = service.getSpeechToTextData();
                 // Perform the model loading in the background thread
-                if (!Objects.isNull(speechRecognizerData) && voskModelName.equals(speechRecognizerData.getModelName())) {
+                if (!Objects.isNull(speechToTextData1) && voskModelName.equals(speechToTextData1.getModelName())) {
                     System.out.println("Speech model was already loaded.");
                     return null;
                 }
-                speechRecognizerData = new SpeechToTextData(Constants.MODELS_DIR_PATH + File.separator + voskModelName);
-                service.setSpeechRecognizerData(speechRecognizerData);
-                speechRecognizerData.loadModel();
+                speechToTextData1 = new SpeechToTextData(Constants.MODELS_DIR_PATH + File.separator + voskModelName);
+                service.setSpeechToTextData(speechToTextData1);
+                service.loadModel();
                 return null;
             }
 
