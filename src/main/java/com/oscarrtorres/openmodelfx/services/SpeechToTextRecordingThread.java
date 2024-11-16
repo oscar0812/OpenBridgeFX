@@ -17,6 +17,8 @@ public class SpeechToTextRecordingThread implements Runnable {
     private final SpeechToTextData data;
     private volatile boolean running = true;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final StringBuilder accumulatedText = new StringBuilder();
+
 
     public SpeechToTextRecordingThread(TextArea valueField, SpeechToTextData data) throws IOException {
         this.valueField = valueField;
@@ -57,7 +59,6 @@ public class SpeechToTextRecordingThread implements Runnable {
     }
 
     private void processFinalResult(String resultJson) {
-        final StringBuilder accumulatedText = new StringBuilder();
         try {
             // Parse the JSON result to get the "text" field only if it's present
             Map<String, String> result = objectMapper.readValue(resultJson, Map.class);
